@@ -88,9 +88,16 @@ impl FirmwareUpdater for MGM210P22A {
 }
 
 fn capture_version(captures: Captures) -> Option<Version> {
-    let mut version = Version::parse(captures.get(1)?.as_str()).ok()?;
-    version.build = BuildMetadata::from_str(captures.get(2)?.as_str()).ok()?;
-    Some(version)
+    Version::parse(captures.get(1)?.as_str())
+        .ok()
+        .and_then(|mut version| {
+            BuildMetadata::from_str(captures.get(2)?.as_str())
+                .ok()
+                .map(|build| {
+                    version.build = build;
+                    version
+                })
+        })
 }
 
 #[cfg(test)]
