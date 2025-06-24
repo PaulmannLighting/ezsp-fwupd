@@ -23,7 +23,7 @@ impl Z3GatewayHost {
     }
 
     /// Add an argument to the command.
-    pub fn arg<S: AsRef<OsStr>>(&mut self, arg: S) -> &mut Self {
+    pub fn arg(&mut self, arg: impl AsRef<OsStr>) -> &mut Self {
         self.command.arg(arg);
         self
     }
