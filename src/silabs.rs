@@ -79,7 +79,7 @@ impl FirmwareUpdater for MGM210P22A {
         todo!()
     }
 
-    fn install_version(&self, version: Self::Version) -> std::io::Result<()> {
+    fn install(&self, _version: &Self::Version) -> std::io::Result<()> {
         todo!()
     }
 }

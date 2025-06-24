@@ -48,7 +48,20 @@ pub trait FirmwareUpdater {
     /// # Errors
     ///
     /// Returns an [`std::io::Error`] if the installation fails.
-    fn install_version(&self, version: Self::Version) -> std::io::Result<()>;
+    fn install(&self, version: &Self::Version) -> std::io::Result<()>;
+
+    fn install_and_validate(&self, version: Self::Version) -> std::io::Result<()> {
+        self.install(&version)?;
+
+        if self.current_version()? == version {
+            Ok(())
+        } else {
+            Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Installed version does not match expected version",
+            ))
+        }
+    }
 
     /// Updates to the latest firmware version if available.
     ///
@@ -57,7 +70,7 @@ pub trait FirmwareUpdater {
     /// Returns an [`std::io::Error`] if the latest version cannot be determined or if the installation fails.
     fn update_to_latest(&self) -> std::io::Result<()> {
         if let Some(latest_version) = self.latest_version() {
-            self.install_version(latest_version)
+            self.install_and_validate(latest_version)
         } else {
             Err(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
