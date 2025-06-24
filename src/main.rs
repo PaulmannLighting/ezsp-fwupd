@@ -15,4 +15,12 @@ fn main() {
             eprintln!("Error retrieving version: {error}");
         }
     }
+
+    println!("Available versions: {:?}", zigbee_chip.available_versions());
+
+    if let Some(latest_version) = zigbee_chip.latest_version() {
+        println!("Latest version: {latest_version}");
+    } else {
+        eprintln!("No latest version available.");
+    }
 }
