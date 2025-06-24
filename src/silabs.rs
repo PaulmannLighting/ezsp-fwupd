@@ -11,7 +11,7 @@ use z3gateway_host::Z3GatewayHost;
 
 use crate::FirmwareUpdater;
 
-pub mod ctrl_c_and_wait_with_output;
+mod ctrl_c_and_wait_with_output;
 mod manifest;
 mod z3gateway_host;
 
