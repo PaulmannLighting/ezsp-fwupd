@@ -1,5 +1,5 @@
 use std::io::ErrorKind;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use regex::{Captures, Regex};
 use semver::Version;
@@ -29,7 +29,7 @@ impl MGM210P22A {
     }
 
     /// Returns the TTY path for the device.
-    pub fn tty(&self) -> &PathBuf {
+    pub fn tty(&self) -> &Path {
         &self.tty
     }
 
