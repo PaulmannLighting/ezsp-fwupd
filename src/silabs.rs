@@ -11,6 +11,7 @@ use ctrl_c_and_wait_with_output::CtrlCAndWaitWithOutput;
 use z3gateway_host::Z3GatewayHost;
 
 pub mod ctrl_c_and_wait_with_output;
+mod manifest;
 mod z3gateway_host;
 
 const BAUD_RATE: u32 = 115200;
@@ -54,7 +55,8 @@ impl MGM210P22A {
     fn read_version(&self) -> std::io::Result<Version> {
         let output = self.status()?;
         let stdout = String::from_utf8_lossy(&output.stdout);
-        let regex = Regex::new(VERSION_REGEX).expect("Failed to compile version regex");
+        let regex = Regex::new(VERSION_REGEX)
+            .map_err(|error| std::io::Error::new(ErrorKind::InvalidData, error))?;
         stdout
             .lines()
             .find_map(|line| regex.captures(line).and_then(capture_version))
