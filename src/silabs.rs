@@ -111,7 +111,7 @@ mod tests {
     const VERSION_LINE: &str = "ezsp ver 0x08 stack type 0x02 stack ver. [6.10.3 GA build 297]";
 
     #[test]
-    fn test_version() {
+    fn test_capture_version() {
         let mut version = Version::new(6, 10, 3);
         Version::new(6, 10, 3);
         version.build = BuildMetadata::new(297.to_string().as_str()).unwrap();
