@@ -8,12 +8,12 @@ use log::error;
 use regex::{Captures, Regex};
 use semver::{BuildMetadata, Version};
 
-use ctrl_c_and_wait_with_output::CtrlCAndWaitWithOutput;
+use ctrl_c::CtrlC;
 use z3gateway_host::Z3GatewayHost;
 
 use crate::FirmwareUpdater;
 
-mod ctrl_c_and_wait_with_output;
+mod ctrl_c;
 mod manifest;
 mod z3gateway_host;
 
@@ -52,7 +52,9 @@ impl MGM210P22A {
             .arg("x")
             .arg("-p")
             .arg(self.tty())
-            .ctrl_c_and_wait_with_output()
+            .spawn()?
+            .ctrl_c()?
+            .wait_with_output()
     }
 
     fn read_version(&self) -> std::io::Result<Version> {
