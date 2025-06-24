@@ -1,18 +1,23 @@
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
+use std::process::{Command, Output};
 
 use regex::{Captures, Regex};
 use semver::Version;
 
 use crate::FirmwareUpdater;
 
+use ctrl_c_and_wait_with_output::CtrlCAndWaitWithOutput;
 use z3gateway_host::Z3GatewayHost;
 
+pub mod ctrl_c_and_wait_with_output;
 mod z3gateway_host;
 
+const BAUD_RATE: u32 = 115200;
 const VERSION_REGEX: &str = r"\[(\d+).(\d+).(\d+) (?:.+) build (\d+)\]";
 
 /// Represents the Silicon Labs MGM210P22A device.
+#[derive(Debug)]
 pub struct MGM210P22A {
     tty: PathBuf,
 }
@@ -32,8 +37,22 @@ impl MGM210P22A {
         &self.tty
     }
 
-    pub fn read_version(&self) -> std::io::Result<Version> {
-        let output = Z3GatewayHost::default().status(self.tty())?;
+    /// Read out the status of the device connected to the specified TTY.
+    fn status(&self) -> std::io::Result<Output> {
+        Command::z3gateway_host()
+            .arg("-n")
+            .arg(1.to_string())
+            .arg("-b")
+            .arg(BAUD_RATE.to_string())
+            .arg("-f")
+            .arg("x")
+            .arg("-p")
+            .arg(self.tty())
+            .ctrl_c_and_wait_with_output()
+    }
+
+    fn read_version(&self) -> std::io::Result<Version> {
+        let output = self.status()?;
         let stdout = String::from_utf8_lossy(&output.stdout);
         let regex = Regex::new(VERSION_REGEX).expect("Failed to compile version regex");
         stdout
