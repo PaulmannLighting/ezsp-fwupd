@@ -1,3 +1,4 @@
+use std::ffi::OsStr;
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
@@ -80,7 +81,35 @@ impl FirmwareUpdater for MGM210P22A {
     }
 
     fn available_versions(&self) -> Vec<Self::Version> {
-        todo!()
+        let Ok(elements) = Self::base_dir()
+            .read_dir()
+            .inspect_err(|error| error!("Error reading directory: {error}"))
+        else {
+            return vec![];
+        };
+
+        let mut versions: Vec<Version> = elements
+            // Exclude invalid entries.
+            .filter_map(|entry| entry.inspect_err(|error| error!("{error}")).ok())
+            // Filter for files only.
+            .filter_map(|entry| {
+                if entry.path().is_file() {
+                    Some(entry.path())
+                } else {
+                    None
+                }
+            })
+            // Extract the file stem and parse it as a version.
+            .filter_map(|path| {
+                path.file_stem().and_then(OsStr::to_str).and_then(|stem| {
+                    Version::from_str(stem)
+                        .inspect_err(|error| error!("Invalid version in file name: {error}"))
+                        .ok()
+                })
+            })
+            .collect();
+        versions.sort();
+        versions
     }
 
     fn install(&self, _version: &Self::Version) -> std::io::Result<()> {
