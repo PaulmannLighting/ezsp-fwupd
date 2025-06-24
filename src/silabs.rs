@@ -1,10 +1,10 @@
+use log::error;
+use regex::{Captures, Regex};
+use semver::{BuildMetadata, Version};
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::str::FromStr;
-
-use regex::{Captures, Regex};
-use semver::{BuildMetadata, Version};
 
 use ctrl_c_and_wait_with_output::CtrlCAndWaitWithOutput;
 use z3gateway_host::Z3GatewayHost;
@@ -89,9 +89,11 @@ impl FirmwareUpdater for MGM210P22A {
 
 fn capture_version(captures: Captures) -> Option<Version> {
     Version::parse(captures.get(1)?.as_str())
+        .inspect_err(|error| error!("Invalid version: {error}"))
         .ok()
         .and_then(|mut version| {
             BuildMetadata::from_str(captures.get(2)?.as_str())
+                .inspect_err(|error| error!("Invalid build metadata: {error}"))
                 .ok()
                 .map(|build| {
                     version.build = build;
