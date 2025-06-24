@@ -14,7 +14,6 @@ use z3gateway_host::Z3GatewayHost;
 use crate::FirmwareUpdater;
 
 mod ctrl_c;
-mod manifest;
 mod z3gateway_host;
 
 const BAUD_RATE: u32 = 115200;
