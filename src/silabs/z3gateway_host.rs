@@ -2,6 +2,7 @@ use std::ffi::OsStr;
 use std::io::{ErrorKind, Write};
 use std::process::{Command, Output, Stdio};
 
+const BAUD_RATE: u32 = 115200;
 const CTRL_C: u8 = 0x03; // ASCII Control-C
 const Z3GATEWAY_HOST: &str = "/usr/bin/Z3GatewayHost";
 
@@ -22,14 +23,21 @@ impl Z3GatewayHost {
         Self { command }
     }
 
-    /// Add an argument to the command.
-    pub fn arg(&mut self, arg: impl AsRef<OsStr>) -> &mut Self {
-        self.command.arg(arg);
-        self
+    /// Read out the status of the device connected to the specified TTY.
+    pub fn status(mut self, tty: impl AsRef<OsStr>) -> std::io::Result<Output> {
+        self.arg("-n")
+            .arg(1.to_string())
+            .arg("-b")
+            .arg(BAUD_RATE.to_string())
+            .arg("-f")
+            .arg("x")
+            .arg("-p")
+            .arg(tty)
+            .run()
     }
 
     /// Run the command and return the output.
-    pub fn run(&mut self) -> std::io::Result<Output> {
+    fn run(&mut self) -> std::io::Result<Output> {
         let mut child = self.command.spawn()?;
 
         let Some(stdin) = &mut child.stdin else {
@@ -42,6 +50,12 @@ impl Z3GatewayHost {
 
         stdin.write_all(&[CTRL_C])?;
         child.wait_with_output()
+    }
+
+    /// Add an argument to the command.
+    fn arg(&mut self, arg: impl AsRef<OsStr>) -> &mut Self {
+        self.command.arg(arg);
+        self
     }
 }
 
