@@ -104,7 +104,7 @@ fn capture_version(captures: Captures) -> Option<Version> {
 
 #[cfg(test)]
 mod tests {
-    use crate::silabs::{VERSION_REGEX, capture_version};
+    use super::{VERSION_REGEX, capture_version};
     use regex::Regex;
     use semver::{BuildMetadata, Version};
 
