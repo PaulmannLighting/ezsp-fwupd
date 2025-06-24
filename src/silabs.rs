@@ -1,10 +1,11 @@
-use log::error;
-use regex::{Captures, Regex};
-use semver::{BuildMetadata, Version};
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::str::FromStr;
+
+use log::error;
+use regex::{Captures, Regex};
+use semver::{BuildMetadata, Version};
 
 use ctrl_c_and_wait_with_output::CtrlCAndWaitWithOutput;
 use z3gateway_host::Z3GatewayHost;
