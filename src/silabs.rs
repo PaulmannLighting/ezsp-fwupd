@@ -77,7 +77,7 @@ impl FirmwareUpdater for MGM210P22A {
     }
 
     fn latest_version(&self) -> Option<Self::Version> {
-        todo!()
+        self.available_versions().into_iter().next_back()
     }
 
     fn available_versions(&self) -> Vec<Self::Version> {
