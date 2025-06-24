@@ -12,7 +12,7 @@ impl CtrlC for Child {
     fn ctrl_c(mut self) -> Result<Self> {
         let Some(ref mut stdin) = self.stdin else {
             self.kill()?;
-            return Err(Error::new(ErrorKind::Other, " Failed to open stdin"))?;
+            return Err(Error::new(ErrorKind::Other, "Failed to open STDIN"))?;
         };
 
         stdin.write_all(&[CTRL_C])?;
