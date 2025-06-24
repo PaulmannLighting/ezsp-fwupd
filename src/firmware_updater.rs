@@ -18,7 +18,11 @@ pub trait FirmwareUpdater {
     }
 
     /// Returns the current firmware version.
-    fn current_version(&self) -> Self::Version;
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`std::io::Error`] if the current version cannot be determined.
+    fn current_version(&self) -> std::io::Result<Self::Version>;
 
     /// Returns the latest available firmware version.
     fn latest_version(&self) -> Option<Self::Version>;
@@ -27,18 +31,30 @@ pub trait FirmwareUpdater {
     fn available_versions(&self) -> Vec<Self::Version>;
 
     /// Checks if an update is available.
-    fn is_update_available(&self) -> bool {
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`std::io::Error`] if the current version cannot be determined.
+    fn is_update_available(&self) -> std::io::Result<bool> {
         let Some(latest_version) = self.latest_version() else {
-            return false;
+            return Ok(false);
         };
 
-        latest_version > self.current_version()
+        Ok(latest_version > self.current_version()?)
     }
 
     /// Installs the specified firmware version.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`std::io::Error`] if the installation fails.
     fn install_version(&self, version: Self::Version) -> std::io::Result<()>;
 
     /// Updates to the latest firmware version if available.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`std::io::Error`] if the latest version cannot be determined or if the installation fails.
     fn update_to_latest(&self) -> std::io::Result<()> {
         if let Some(latest_version) = self.latest_version() {
             self.install_version(latest_version)

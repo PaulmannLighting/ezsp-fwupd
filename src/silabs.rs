@@ -14,7 +14,7 @@ impl FirmwareUpdater for MGM210P22A {
 
     type Version = Version;
 
-    fn current_version(&self) -> Self::Version {
+    fn current_version(&self) -> std::io::Result<Self::Version> {
         todo!()
     }
 
