@@ -10,6 +10,8 @@ pub struct MGM210P22A {
 }
 
 impl FirmwareUpdater for MGM210P22A {
+    const BASE_DIR: &'static str = "MGM210P22A";
+
     type Version = Version;
 
     fn current_version(&self) -> Self::Version {

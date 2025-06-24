@@ -1,7 +1,21 @@
+use std::path::{Path, PathBuf};
+
+const BASE_DIR: &str = "/opt/firmware-updater";
+
 /// A trait for firmware updating functionality.
 pub trait FirmwareUpdater {
+    /// The base directory where firmware files are stored.
+    ///
+    /// This directory must be relative to the global `BASE_DIR`.
+    const BASE_DIR: &'static str;
+
     /// Represents the version type used by the firmware updater.
     type Version: Eq + PartialOrd;
+
+    /// Returns the base directory for firmware files.
+    fn base_dir() -> PathBuf {
+        Path::new(BASE_DIR).join(Self::BASE_DIR)
+    }
 
     /// Returns the current firmware version.
     fn current_version(&self) -> Self::Version;
