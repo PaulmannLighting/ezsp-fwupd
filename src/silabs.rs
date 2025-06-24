@@ -1,21 +1,22 @@
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
+use std::str::FromStr;
 
 use regex::{Captures, Regex};
-use semver::Version;
-
-use crate::FirmwareUpdater;
+use semver::{BuildMetadata, Version};
 
 use ctrl_c_and_wait_with_output::CtrlCAndWaitWithOutput;
 use z3gateway_host::Z3GatewayHost;
+
+use crate::FirmwareUpdater;
 
 pub mod ctrl_c_and_wait_with_output;
 mod manifest;
 mod z3gateway_host;
 
 const BAUD_RATE: u32 = 115200;
-const VERSION_REGEX: &str = r"\[(\d+).(\d+).(\d+) (?:.+) build (\d+)\]";
+const VERSION_REGEX: &str = r"\[(\d+\.\d+\.\d+) (?:.+) build (\d+)\]";
 
 /// Represents the Silicon Labs MGM210P22A device.
 #[derive(Debug)]
@@ -87,24 +88,32 @@ impl FirmwareUpdater for MGM210P22A {
 }
 
 fn capture_version(captures: Captures) -> Option<Version> {
-    Version::parse(&format!(
-        "{}.{}.{}-{}",
-        captures.get(1)?.as_str(),
-        captures.get(2)?.as_str(),
-        captures.get(3)?.as_str(),
-        captures.get(4)?.as_str()
-    ))
-    .ok()
+    let mut version = Version::parse(captures.get(1)?.as_str()).ok()?;
+    version.build = BuildMetadata::from_str(captures.get(2)?.as_str()).ok()?;
+    Some(version)
 }
 
 #[cfg(test)]
 mod tests {
-    use semver::Version;
+    use crate::silabs::{VERSION_REGEX, capture_version};
+    use regex::Regex;
+    use semver::{BuildMetadata, Version};
 
-    const VERSION: &str = "6.10.3-297";
+    const VERSION_LINE: &str = "ezsp ver 0x08 stack type 0x02 stack ver. [6.10.3 GA build 297]";
 
     #[test]
     fn test_version() {
-        Version::parse(VERSION).expect("Failed to parse version");
+        let mut version = Version::new(6, 10, 3);
+        Version::new(6, 10, 3);
+        version.build = BuildMetadata::new(297.to_string().as_str()).unwrap();
+        assert_eq!(
+            capture_version(
+                Regex::new(VERSION_REGEX)
+                    .unwrap()
+                    .captures(VERSION_LINE)
+                    .unwrap()
+            ),
+            Some(version)
+        );
     }
 }
