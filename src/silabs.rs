@@ -65,6 +65,31 @@ impl MGM210P22A {
             .find_map(|line| regex.captures(line).and_then(capture_version))
             .ok_or_else(|| std::io::Error::new(ErrorKind::NotFound, "Version not found"))
     }
+
+    fn list_versions(&self) -> std::io::Result<Vec<Version>> {
+        Self::base_dir().read_dir().map(|elements| {
+            elements
+                // Exclude invalid entries.
+                .filter_map(|entry| entry.inspect_err(|error| error!("{error}")).ok())
+                // Filter for files only.
+                .filter_map(|entry| {
+                    if entry.path().is_file() {
+                        Some(entry.path())
+                    } else {
+                        None
+                    }
+                })
+                // Extract the file stem and parse it as a version.
+                .filter_map(|path| {
+                    path.file_stem().and_then(OsStr::to_str).and_then(|stem| {
+                        Version::from_str(stem)
+                            .inspect_err(|error| error!("Invalid version in file name: {error}"))
+                            .ok()
+                    })
+                })
+                .collect()
+        })
+    }
 }
 
 impl FirmwareUpdater for MGM210P22A {
@@ -81,33 +106,10 @@ impl FirmwareUpdater for MGM210P22A {
     }
 
     fn available_versions(&self) -> Vec<Self::Version> {
-        let Ok(elements) = Self::base_dir()
-            .read_dir()
+        let mut versions: Vec<Version> = self
+            .list_versions()
             .inspect_err(|error| error!("Error reading directory: {error}"))
-        else {
-            return vec![];
-        };
-
-        let mut versions: Vec<Version> = elements
-            // Exclude invalid entries.
-            .filter_map(|entry| entry.inspect_err(|error| error!("{error}")).ok())
-            // Filter for files only.
-            .filter_map(|entry| {
-                if entry.path().is_file() {
-                    Some(entry.path())
-                } else {
-                    None
-                }
-            })
-            // Extract the file stem and parse it as a version.
-            .filter_map(|path| {
-                path.file_stem().and_then(OsStr::to_str).and_then(|stem| {
-                    Version::from_str(stem)
-                        .inspect_err(|error| error!("Invalid version in file name: {error}"))
-                        .ok()
-                })
-            })
-            .collect();
+            .unwrap_or_default();
         versions.sort();
         versions
     }
