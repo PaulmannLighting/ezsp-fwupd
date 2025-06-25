@@ -8,6 +8,7 @@ use serialport::SerialPort;
 use tokio::sync::Mutex;
 use tokio::sync::mpsc::{Receiver, channel};
 
+use crate::silabs2::xmodem::EOT;
 use xmodem_frames::XmodemFrames;
 
 mod xmodem;
@@ -114,10 +115,30 @@ where
                                     .await
                                 {
                                     error!("Failed to send bootload message: {error}");
+                                    return;
                                 }
                             } else {
+                                info!("Sending EOT.");
+
+                                if let Err(error) = uart
+                                    .lock()
+                                    .await
+                                    .send_bootload_message(
+                                        false,
+                                        [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00].into(),
+                                        {
+                                            let mut vec = heapless::Vec::<u8, 255>::new();
+                                            vec.push(EOT).unwrap();
+                                            vec
+                                        },
+                                    )
+                                    .await
+                                {
+                                    error!("Failed to send EOT: {error}");
+                                }
+
                                 info!("All frames sent, exiting bootloader.");
-                                break;
+                                return;
                             }
                         }
                     },
