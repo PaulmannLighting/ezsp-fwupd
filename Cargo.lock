@@ -960,6 +960,7 @@ version = "0.1.0"
 dependencies = [
  "ashv2 0.2.1",
  "clap",
+ "crc",
  "env_logger",
  "ezsp",
  "heapless",

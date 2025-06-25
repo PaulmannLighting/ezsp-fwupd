@@ -1,28 +1,32 @@
-use ashv2::{BaudRate, open};
-use clap::Parser;
-pub use firmware_updater::FirmwareUpdater;
-use log::error;
-use serialport::FlowControl;
-use silabs2::Fwupd;
 use std::fs::OpenOptions;
 use std::io::Read;
 use std::path::PathBuf;
 
+use ashv2::BaudRate;
+use clap::Parser;
+use fwupd::{Tty, update_firmware};
+use log::error;
+use serialport::FlowControl;
+
 mod firmware_updater;
-mod silabs;
-mod silabs2;
+mod fwupd;
 
 #[derive(Debug, Parser)]
 struct Args {
+    #[clap(index = 1, help = "the serial port to use for firmware update")]
     tty: String,
+    #[clap(index = 2, help = "the firmware file to upload")]
     firmware: PathBuf,
+    #[clap(
+        long,
+        short,
+        help = "the offset in the firmware file to start uploading from",
+        default_value_t = 0
+    )]
+    offset: usize,
 }
 
 impl Args {
-    pub fn tty(&self) -> &str {
-        &self.tty
-    }
-
     pub fn firmware(&self) -> std::io::Result<Vec<u8>> {
         OpenOptions::new()
             .read(true)
@@ -39,19 +43,11 @@ impl Args {
 async fn main() {
     env_logger::init();
     let args = Args::parse();
+    let firmware = args.firmware().expect("Failed to read firmware file");
+    let tty = Tty::new(args.tty, BaudRate::RstCts, FlowControl::Software);
 
-    match open(
-        args.tty().to_string(),
-        BaudRate::RstCts,
-        FlowControl::Software,
-    ) {
-        Ok(serial_port) => {
-            let fwupd = Fwupd::new(serial_port);
-            fwupd
-                .update_firmware(args.firmware().expect("Invalid data"))
-                .await
-                .unwrap();
-        }
-        Err(error) => error!("{error}"),
-    }
+    update_firmware(tty, firmware).await.unwrap_or_else(|err| {
+        error!("Firmware update failed: {err}");
+        std::process::exit(1);
+    });
 }
