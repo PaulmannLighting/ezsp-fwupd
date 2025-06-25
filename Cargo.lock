@@ -965,7 +965,6 @@ dependencies = [
  "ezsp",
  "heapless",
  "log",
- "regex",
  "semver",
  "serialport",
  "tokio",

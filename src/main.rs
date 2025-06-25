@@ -8,7 +8,6 @@ use fwupd::{Tty, update_firmware};
 use log::error;
 use serialport::FlowControl;
 
-mod firmware_updater;
 mod fwupd;
 
 #[derive(Debug, Parser)]
