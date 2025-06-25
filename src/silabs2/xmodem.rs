@@ -46,3 +46,11 @@ impl From<Xmodem> for PacketBytes {
         vec
     }
 }
+
+impl From<Xmodem> for heapless::Vec<u8, 255> {
+    fn from(packet: Xmodem) -> Self {
+        let mut vec = Self::new();
+        vec.extend(PacketBytes::from(packet));
+        vec
+    }
+}
