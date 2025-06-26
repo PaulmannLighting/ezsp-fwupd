@@ -24,6 +24,7 @@ pub struct Frame {
 
 impl Frame {
     /// Creates a new Xmodem packet with the given block number and data.
+    #[allow(clippy::missing_const_for_fn)]
     pub fn new(blk: u8, data: Payload) -> Self {
         Self {
             soh: SOH,

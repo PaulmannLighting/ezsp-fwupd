@@ -1,19 +1,27 @@
-use log::{debug, error, info, warn};
-use tokio::sync::mpsc::{Receiver, channel};
+use log::{error, info};
+use tokio::sync::mpsc::channel;
 
-use ezsp::parameters::bootloader::handler::Handler;
+use clear_buffer::ClearBuffer;
 use ezsp::uart::Uart;
 use ezsp::{Bootloader, Callback};
-
+use serialport::SerialPort;
 pub use tty::Tty;
 use xmodem::Send;
 
+mod clear_buffer;
 mod tty;
 mod xmodem;
 
 pub async fn update_firmware(tty: Tty, firmware: Vec<u8>) -> std::io::Result<Box<[u8]>> {
-    let (callbacks_tx, callbacks_rx) = channel::<Callback>(8);
-    let mut uart = Uart::new(tty.open()?, callbacks_tx, 8, 8);
+    prepare_bootloader(tty.open()?).await?;
+    let mut serial_port = tty.open()?;
+    serial_port.clear_buffer()?;
+    serial_port.send(firmware)
+}
+
+async fn prepare_bootloader(serial_port: impl SerialPort + 'static) -> std::io::Result<()> {
+    let (callbacks_tx, _callbacks_rx) = channel::<Callback>(8);
+    let mut uart = Uart::new(serial_port, callbacks_tx, 8, 8);
 
     match uart
         .get_standalone_bootloader_version_plat_micro_phy()
@@ -26,41 +34,12 @@ pub async fn update_firmware(tty: Tty, firmware: Vec<u8>) -> std::io::Result<Box
             error!("Failed to get bootloader info: {error}");
             return Err(std::io::Error::new(std::io::ErrorKind::Other, error));
         }
-    };
+    }
 
-    spawn_listener_task(callbacks_rx);
     uart.launch_standalone_bootloader(0x00)
         .await
         .unwrap_or_else(|error| {
             error!("Failed to launch standalone bootloader: {error}");
         });
-
-    drop(uart);
-    tty.open()?.send(firmware)
-}
-
-fn spawn_listener_task(mut callbacks_rx: Receiver<Callback>) -> tokio::task::JoinHandle<()> {
-    tokio::spawn(async move {
-        loop {
-            info!("Awaiting callback...");
-            if let Some(callback) = callbacks_rx.recv().await {
-                debug!("Received callback: {callback:#?}");
-                match callback {
-                    Callback::Bootloader(message) => match message {
-                        Handler::BootloadTransmitComplete(handler) => {
-                            info!("Bootload transmit complete: {handler:#?}");
-                            return;
-                        }
-                        Handler::IncomingBootloadMessage(handler) => {
-                            info!("Incoming bootload message: {handler:#?}");
-                            return;
-                        }
-                    },
-                    other => {
-                        warn!("Unhandled callback: {other:#?}");
-                    }
-                }
-            }
-        }
-    })
+    Ok(())
 }

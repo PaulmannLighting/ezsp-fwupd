@@ -1,5 +1,6 @@
-use std::fs::OpenOptions;
-use std::io::Read;
+//! A firmware update utility for devices using the `ASHv2` and `XMODEM` protocols.
+
+use std::fs::read;
 use std::path::PathBuf;
 
 use ashv2::BaudRate;
@@ -27,14 +28,7 @@ struct Args {
 
 impl Args {
     pub fn firmware(&self) -> std::io::Result<Vec<u8>> {
-        OpenOptions::new()
-            .read(true)
-            .open(&self.firmware)
-            .and_then(|mut file| {
-                let mut buffer = Vec::new();
-                file.read_to_end(&mut buffer)?;
-                Ok(buffer)
-            })
+        read(&self.firmware)
     }
 }
 
@@ -42,7 +36,8 @@ impl Args {
 async fn main() {
     env_logger::init();
     let args = Args::parse();
-    let firmware = args.firmware().expect("Failed to read firmware file");
+    let firmware: Vec<u8> =
+        args.firmware().expect("Failed to read firmware file")[args.offset..].to_vec();
     let tty = Tty::new(args.tty, BaudRate::RstCts, FlowControl::Software);
 
     update_firmware(tty, firmware).await.unwrap_or_else(|err| {

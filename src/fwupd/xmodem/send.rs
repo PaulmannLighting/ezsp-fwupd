@@ -1,6 +1,6 @@
+use ashv2::HexSlice;
+use log::{error, info};
 use std::io::{ErrorKind, Read, Write};
-
-use log::error;
 
 use super::frame::{ACK, EOT, Frame, NAK};
 use super::frames::Frames;
@@ -13,8 +13,25 @@ pub trait Send: Read + Write {
     where
         T: IntoIterator<Item = u8>,
     {
-        for frame in Frames::new(data.into_iter()) {
-            self.send_frame(frame)?;
+        info!("Starting XMODEM file transfer...");
+
+        // TODO: Does this belong here?
+        self.write_all(&[0x0A])?;
+        let mut resp1 = [0; 69];
+        info!("Waiting for initial response...");
+        self.read_exact(&mut resp1)?;
+        info!("Received initial response: {:#04X}", HexSlice::new(&resp1));
+
+        // TODO: Does this belong here?
+        info!("Sending start signal...");
+        self.write_all(&[0x31])?;
+        let mut resp2 = [0; 21];
+        info!("Waiting for second response...");
+        self.read_exact(&mut resp2)?;
+        info!("Received second response: {:#04X}", HexSlice::new(&resp2));
+
+        for (index, frame) in Frames::new(data.into_iter()).enumerate() {
+            self.send_frame(index, frame)?;
         }
 
         self.write_all(&[EOT])?;
@@ -25,9 +42,12 @@ pub trait Send: Read + Write {
         Ok(buffer.into_boxed_slice())
     }
 
-    fn send_frame(&mut self, frame: Frame) -> std::io::Result<()> {
+    fn send_frame(&mut self, index: usize, frame: Frame) -> std::io::Result<()> {
+        info!("Sending frame #{index}...");
+
         let mut ctr: usize = 0;
         let bytes = frame.into_bytes();
+        info!("Sending frame #{index}: {:#04X}", HexSlice::new(&bytes));
 
         loop {
             match self.try_send_frame(&bytes) {
@@ -38,9 +58,9 @@ pub trait Send: Read + Write {
                             ErrorKind::TimedOut,
                             "Maximum retries exceeded",
                         ));
-                    } else {
-                        error!("Attempt {ctr} failed: {error}, retrying...");
                     }
+
+                    error!("Attempt {ctr} failed: {error}, retrying...");
                 }
             }
 
@@ -54,7 +74,14 @@ pub trait Send: Read + Write {
 
         let mut response = [0];
         self.read_exact(&mut response)?;
+        info!("Received {response:#02X?}");
         let [byte] = response;
+        let excess = Vec::new();
+        let amount = self.read(&mut response)?;
+        info!(
+            "Received {amount} excess bytes: {:#04X}",
+            HexSlice::new(&excess)
+        );
 
         match byte {
             ACK => Ok(()),
