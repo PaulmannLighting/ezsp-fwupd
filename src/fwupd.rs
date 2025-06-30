@@ -48,8 +48,9 @@ impl Fwupd for Tty {
         }
 
         let mut serial_port = self.open()?;
+        serial_port.clear_read_buffer(timeout)?;
 
-        if let Err(error) = serial_port.transmit(firmware, timeout) {
+        if let Err(error) = serial_port.transmit(firmware) {
             serial_port.reset()?;
             return Err(error);
         }
@@ -59,22 +60,32 @@ impl Fwupd for Tty {
 }
 
 pub trait Transmit {
+    /// Clear the read buffer of the serial port.
+    fn clear_read_buffer(&mut self, timeout: Option<Duration>) -> std::io::Result<()>;
+
     /// Transmit the firmware to the device using the XMODEM protocol.
-    fn transmit(&mut self, firmware: Vec<u8>, timeout: Option<Duration>) -> std::io::Result<()>;
+    fn transmit(&mut self, firmware: Vec<u8>) -> std::io::Result<()>;
 }
 
 impl<T> Transmit for T
 where
     T: SerialPort,
 {
-    fn transmit(&mut self, firmware: Vec<u8>, timeout: Option<Duration>) -> std::io::Result<()> {
+    fn clear_read_buffer(&mut self, timeout: Option<Duration>) -> std::io::Result<()> {
         info!("Clearing buffer...");
-        self.clear_buffer()?;
+        let original_timeout = self.timeout();
 
         if let Some(timeout) = timeout {
             self.set_timeout(timeout)?;
         }
 
+        self.clear_buffer()?;
+        self.set_timeout(original_timeout)?;
+
+        Ok(())
+    }
+
+    fn transmit(&mut self, firmware: Vec<u8>) -> std::io::Result<()> {
         // TODO: What does this do?
         self.write_all(&[0x0A])?;
         let mut resp1 = [0; 69];
