@@ -34,7 +34,12 @@ impl Fwupd for Tty {
         prepare: bool,
         reset_only: bool,
     ) -> std::io::Result<()> {
-        if prepare && !reset_only {
+        if reset_only {
+            info!("Only resetting the device...");
+            return self.open()?.reset();
+        }
+
+        if prepare {
             info!("Preparing bootloader...");
             if let Err(error) = self.open()?.prepare_bootloader().await {
                 self.open()?.reset()?;
@@ -44,11 +49,9 @@ impl Fwupd for Tty {
 
         let mut serial_port = self.open()?;
 
-        if !reset_only {
-            if let Err(error) = serial_port.transmit(firmware, timeout) {
-                serial_port.reset()?;
-                return Err(error);
-            }
+        if let Err(error) = serial_port.transmit(firmware, timeout) {
+            serial_port.reset()?;
+            return Err(error);
         }
 
         serial_port.reset()
