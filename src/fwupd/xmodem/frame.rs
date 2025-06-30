@@ -7,7 +7,7 @@ pub const ACK: u8 = 0x06;
 pub const NAK: u8 = 0x15;
 pub const PAYLOAD_SIZE: usize = 128;
 pub const PACKET_SIZE: usize = PAYLOAD_SIZE + 5;
-pub type Payload = heapless::Vec<u8, PAYLOAD_SIZE>;
+pub type Payload = [u8; PAYLOAD_SIZE];
 pub type PacketBytes = heapless::Vec<u8, PACKET_SIZE>;
 
 const CRC: Crc<u16> = Crc::<u16>::new(&CRC_16_XMODEM);
@@ -37,7 +37,7 @@ impl Frame {
 
     /// Returns the bytes of the packet.
     pub fn into_bytes(self) -> PacketBytes {
-        let mut vec = heapless::Vec::new();
+        let mut vec = PacketBytes::new();
         vec.push(self.soh).expect("Buffer overflow. This is a bug.");
         vec.push(self.blk).expect("Buffer overflow. This is a bug.");
         vec.push(self.cmp).expect("Buffer overflow. This is a bug.");
