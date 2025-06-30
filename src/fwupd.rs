@@ -1,3 +1,4 @@
+use std::io::Read;
 use std::time::Duration;
 
 use ashv2::HexSlice;
@@ -116,7 +117,11 @@ where
 {
     fn reset(&mut self) -> std::io::Result<()> {
         info!("Resetting serial port...");
+        self.flush()?;
         self.write_all(&[0x0A, 0x32])?;
+        let mut buffer = Vec::new();
+        self.read_to_end(buffer.as_mut()).ignore_timeout()?;
+        debug!("Read buffer after reset: {:#04X}", HexSlice::new(&buffer));
         self.flush()
     }
 }
