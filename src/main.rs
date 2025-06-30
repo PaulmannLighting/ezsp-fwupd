@@ -6,7 +6,6 @@ use fwupd::{Tty, update_firmware};
 use log::error;
 use serialport::FlowControl;
 use std::fs::read;
-use std::io::{ErrorKind, Read, Write};
 use std::path::PathBuf;
 use std::time::Duration;
 
