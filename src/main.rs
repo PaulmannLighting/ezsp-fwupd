@@ -12,7 +12,6 @@ use indicatif::ProgressBar;
 use log::error;
 use serialport::FlowControl;
 
-mod fill;
 mod fwupd;
 mod ignore_timeout;
 

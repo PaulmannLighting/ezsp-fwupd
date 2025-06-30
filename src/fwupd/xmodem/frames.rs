@@ -1,5 +1,6 @@
+use std::iter::repeat;
+
 use super::frame::{Frame, PAYLOAD_SIZE};
-use crate::fill::Fill;
 
 const FILLER: u8 = 0xFF;
 
@@ -40,7 +41,7 @@ where
 
         for (dst, src) in payload
             .iter_mut()
-            .zip(self.buffer.iter().copied().fill(FILLER))
+            .zip(self.buffer.iter().copied().chain(repeat(FILLER)))
         {
             *dst = src;
         }
