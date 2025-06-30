@@ -1,4 +1,3 @@
-use std::io::Read;
 use std::time::Duration;
 
 use ashv2::HexSlice;
@@ -37,13 +36,13 @@ impl Fwupd for Tty {
     ) -> std::io::Result<()> {
         if reset_only {
             info!("Only resetting the device...");
-            return self.open()?.reset();
+            return self.open()?.reset(timeout);
         }
 
         if prepare {
             info!("Preparing bootloader...");
             if let Err(error) = self.open()?.prepare_bootloader().await {
-                self.open()?.reset()?;
+                self.open()?.reset(timeout)?;
                 return Err(error);
             }
         }
@@ -58,11 +57,11 @@ impl Fwupd for Tty {
         serial_port.clear_buffer()?;
 
         if let Err(error) = serial_port.transmit(firmware, Some(original_timeout)) {
-            serial_port.reset()?;
+            serial_port.reset(timeout)?;
             return Err(error);
         }
 
-        serial_port.reset()
+        serial_port.reset(timeout)
     }
 }
 
@@ -108,21 +107,34 @@ where
 
 pub trait Reset {
     /// Reset the device and finalize the firmware update process.
-    fn reset(&mut self) -> std::io::Result<()>;
+    fn reset(&mut self, timeout: Option<Duration>) -> std::io::Result<()>;
 }
 
 impl<T> Reset for T
 where
     T: SerialPort,
 {
-    fn reset(&mut self) -> std::io::Result<()> {
+    fn reset(&mut self, timeout: Option<Duration>) -> std::io::Result<()> {
+        let original_timeout = self.timeout();
+
+        if let Some(timeout) = timeout {
+            info!("Setting reset timeout to {timeout:?}");
+            self.set_timeout(timeout)?;
+        } else {
+            info!("Using default timeout for reset");
+        }
+
         info!("Resetting serial port...");
         self.flush()?;
         self.write_all(&[0x0A, 0x32])?;
+        self.flush()?;
+
         let mut buffer = Vec::new();
         self.read_to_end(buffer.as_mut()).ignore_timeout()?;
         debug!("Read buffer after reset: {:#04X}", HexSlice::new(&buffer));
-        self.flush()
+
+        self.set_timeout(original_timeout)?;
+        Ok(())
     }
 }
 
