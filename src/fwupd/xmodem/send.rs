@@ -1,10 +1,10 @@
 use std::io::{ErrorKind, Read, Write};
 
-use ashv2::HexSlice;
-use log::{error, info};
-
 use super::frame::{ACK, EOT, Frame, NAK};
 use super::frames::Frames;
+use crate::ignore_timeout::IgnoreTimeout;
+use ashv2::HexSlice;
+use log::{error, info};
 
 const MAX_RETRIES: usize = 10;
 
@@ -62,10 +62,11 @@ pub trait Send: Read + Write {
         self.read_exact(&mut response)?;
         info!("Received {response:#02X?}");
         let [byte] = response;
-        let excess = Vec::new();
-        let amount = self.read(&mut response)?;
+        let mut excess = Vec::new();
+        self.read_to_end(&mut excess).ignore_timeout()?;
         info!(
-            "Received {amount} excess bytes: {:#04X}",
+            "Received {} excess bytes: {:#04X}",
+            excess.len(),
             HexSlice::new(&excess)
         );
 
