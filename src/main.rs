@@ -39,8 +39,8 @@ struct Args {
         help = "the timeout in milliseconds for the firmware update"
     )]
     timeout: Option<u64>,
-    #[clap(long, help = "reset the device after the firmware update")]
-    reset_only: bool,
+    #[clap(long, help = "only reset the device")]
+    reset: bool,
 }
 
 impl Args {
@@ -62,7 +62,7 @@ async fn main() {
         firmware,
         args.timeout.map(Duration::from_millis),
         !args.no_prepare,
-        args.reset_only,
+        args.reset,
     )
     .await
     .unwrap_or_else(|err| {
