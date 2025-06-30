@@ -32,7 +32,7 @@ async fn prepare_bootloader(serial_port: impl SerialPort + 'static) -> std::io::
         }
         Err(error) => {
             error!("Failed to get bootloader info: {error}");
-            return Err(std::io::Error::new(std::io::ErrorKind::Other, error));
+            return Err(std::io::Error::other(error));
         }
     }
 

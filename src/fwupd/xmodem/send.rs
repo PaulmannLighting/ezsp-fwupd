@@ -85,14 +85,10 @@ pub trait Send: Read + Write {
 
         match byte {
             ACK => Ok(()),
-            NAK => Err(std::io::Error::new(
-                ErrorKind::Other,
-                "NAK received, retransmitting frame",
-            )),
-            other => Err(std::io::Error::new(
-                ErrorKind::Other,
-                format!("Received unexpected response: {other}"),
-            )),
+            NAK => Err(std::io::Error::other("NAK received, retransmitting frame")),
+            other => Err(std::io::Error::other(format!(
+                "Received unexpected response: {other}"
+            ))),
         }
     }
 }
