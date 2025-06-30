@@ -30,7 +30,7 @@ enum Action {
         timeout: Option<u64>,
     },
     Update {
-        #[clap(index = 2, help = "the firmware file to upload")]
+        #[clap(index = 1, help = "the firmware file to upload")]
         firmware: PathBuf,
         #[clap(
             long,
