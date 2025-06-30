@@ -48,9 +48,15 @@ impl Fwupd for Tty {
         }
 
         let mut serial_port = self.open()?;
-        serial_port.clear_read_buffer(timeout)?;
+        let original_timeout = serial_port.timeout();
 
-        if let Err(error) = serial_port.transmit(firmware) {
+        if let Some(timeout) = timeout {
+            serial_port.set_timeout(timeout)?;
+        }
+
+        serial_port.clear_buffer()?;
+
+        if let Err(error) = serial_port.transmit(firmware, Some(original_timeout)) {
             serial_port.reset()?;
             return Err(error);
         }
@@ -60,32 +66,15 @@ impl Fwupd for Tty {
 }
 
 pub trait Transmit {
-    /// Clear the read buffer of the serial port.
-    fn clear_read_buffer(&mut self, timeout: Option<Duration>) -> std::io::Result<()>;
-
     /// Transmit the firmware to the device using the XMODEM protocol.
-    fn transmit(&mut self, firmware: Vec<u8>) -> std::io::Result<()>;
+    fn transmit(&mut self, firmware: Vec<u8>, timeout: Option<Duration>) -> std::io::Result<()>;
 }
 
 impl<T> Transmit for T
 where
     T: SerialPort,
 {
-    fn clear_read_buffer(&mut self, timeout: Option<Duration>) -> std::io::Result<()> {
-        info!("Clearing buffer...");
-        let original_timeout = self.timeout();
-
-        if let Some(timeout) = timeout {
-            self.set_timeout(timeout)?;
-        }
-
-        self.clear_buffer()?;
-        self.set_timeout(original_timeout)?;
-
-        Ok(())
-    }
-
-    fn transmit(&mut self, firmware: Vec<u8>) -> std::io::Result<()> {
+    fn transmit(&mut self, firmware: Vec<u8>, timeout: Option<Duration>) -> std::io::Result<()> {
         // TODO: What does this do?
         self.write_all(&[0x0A])?;
         let mut resp1 = [0; 69];
@@ -100,6 +89,13 @@ where
         info!("Waiting for second response...");
         self.read_exact(&mut resp2).ignore_timeout()?;
         info!("Received second response: {:#04X}", HexSlice::new(&resp2));
+
+        if let Some(timeout) = timeout {
+            info!("Setting timeout to {timeout:?}");
+            self.set_timeout(timeout)?;
+        } else {
+            info!("Using default timeout");
+        }
 
         info!("Sending firmware...");
         let response = self.send(firmware)?;
