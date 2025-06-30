@@ -25,6 +25,12 @@ struct Args {
         default_value_t = 0
     )]
     offset: usize,
+    #[clap(
+        long,
+        short,
+        help = "do not prepare the bootloader before uploading the firmware"
+    )]
+    no_prepare: bool,
 }
 
 impl Args {
@@ -41,8 +47,10 @@ async fn main() {
         args.firmware().expect("Failed to read firmware file")[args.offset..].to_vec();
     let tty = Tty::new(args.tty, BaudRate::RstCts, FlowControl::Software);
 
-    update_firmware(tty, firmware).await.unwrap_or_else(|err| {
-        error!("Firmware update failed: {err}");
-        std::process::exit(1);
-    });
+    update_firmware(tty, firmware, !args.no_prepare)
+        .await
+        .unwrap_or_else(|err| {
+            error!("Firmware update failed: {err}");
+            std::process::exit(1);
+        });
 }

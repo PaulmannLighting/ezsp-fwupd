@@ -16,9 +16,16 @@ mod clear_buffer;
 mod tty;
 mod xmodem;
 
-pub async fn update_firmware(tty: Tty, firmware: Vec<u8>) -> std::io::Result<Box<[u8]>> {
-    info!("Preparing bootloader...");
-    prepare_bootloader(tty.open()?).await?;
+pub async fn update_firmware(
+    tty: Tty,
+    firmware: Vec<u8>,
+    prepare: bool,
+) -> std::io::Result<Box<[u8]>> {
+    if prepare {
+        info!("Preparing bootloader...");
+        prepare_bootloader(tty.open()?).await?;
+    }
+
     let mut serial_port = tty.open()?;
     info!("Clearing buffer...");
     serial_port.clear_buffer()?;
