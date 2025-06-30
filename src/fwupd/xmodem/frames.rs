@@ -1,4 +1,4 @@
-use super::frame::{Frame, PAYLOAD_SIZE, Payload};
+use super::frame::{Frame, PAYLOAD_SIZE};
 use crate::fill::Fill;
 
 const FILLER: u8 = 0xFF;
@@ -7,7 +7,7 @@ const FILLER: u8 = 0xFF;
 #[derive(Debug)]
 pub struct Frames<T> {
     bytes: T,
-    buffer: Payload,
+    buffer: Vec<u8>,
     index: u8,
 }
 
@@ -16,7 +16,7 @@ impl<T> Frames<T> {
     pub const fn new(bytes: T) -> Self {
         Self {
             bytes,
-            buffer: [0; PAYLOAD_SIZE],
+            buffer: Vec::new(),
             index: 1,
         }
     }
@@ -29,21 +29,25 @@ where
     type Item = Frame;
 
     fn next(&mut self) -> Option<Self::Item> {
-        for (dst, src) in self
-            .buffer
+        self.buffer.clear();
+        self.buffer.extend(self.bytes.by_ref().take(PAYLOAD_SIZE));
+
+        if self.buffer.is_empty() {
+            return None;
+        }
+
+        let mut payload = [0; PAYLOAD_SIZE];
+
+        for (dst, src) in payload
             .iter_mut()
-            .zip(self.bytes.by_ref().take(PAYLOAD_SIZE).fill(FILLER))
+            .zip(self.buffer.iter().copied().fill(FILLER))
         {
             *dst = src;
         }
 
-        if self.buffer.is_empty() {
-            None
-        } else {
-            let frame = Frame::new(self.index, self.buffer);
-            self.index = self.index.wrapping_add(1);
-            Some(frame)
-        }
+        let frame = Frame::new(self.index, payload);
+        self.index = self.index.wrapping_add(1);
+        Some(frame)
     }
 }
 
