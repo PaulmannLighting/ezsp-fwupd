@@ -2,7 +2,7 @@ use std::io::{ErrorKind, Read, Write};
 
 use ashv2::HexSlice;
 use indicatif::ProgressBar;
-use log::{debug, error, info, trace};
+use log::{debug, trace};
 
 use super::frame::{ACK, EOT, Frame, NAK};
 use super::frames::Frames;
