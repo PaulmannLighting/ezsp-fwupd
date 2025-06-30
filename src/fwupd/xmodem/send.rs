@@ -2,7 +2,7 @@ use std::io::{ErrorKind, Read, Write};
 
 use ashv2::HexSlice;
 use indicatif::ProgressBar;
-use log::{error, info};
+use log::{debug, error, info, trace};
 
 use super::frame::{ACK, EOT, Frame, NAK};
 use super::frames::Frames;
@@ -16,12 +16,12 @@ pub trait Send: Read + Write {
     where
         T: IntoIterator<Item = u8>,
     {
-        info!("Starting XMODEM file transfer...");
+        debug!("Starting XMODEM file transfer...");
 
         for (index, frame) in Frames::new(data.into_iter()).enumerate() {
             self.send_frame(index, frame)?;
 
-            if let Some(ref progress_bar) = progress_bar {
+            if let Some(progress_bar) = progress_bar {
                 progress_bar.inc(1);
             }
         }
@@ -34,11 +34,11 @@ pub trait Send: Read + Write {
     }
 
     fn send_frame(&mut self, index: usize, frame: Frame) -> std::io::Result<()> {
-        info!("Sending frame #{index}...");
+        debug!("Sending frame #{index}...");
 
         let mut ctr: usize = 0;
         let bytes = frame.into_bytes();
-        info!("Sending frame #{index}: {:#04X}", HexSlice::new(&bytes));
+        trace!("Sending frame #{index}: {:#04X}", HexSlice::new(&bytes));
 
         loop {
             match self.try_send_frame(&bytes) {
@@ -51,7 +51,7 @@ pub trait Send: Read + Write {
                         ));
                     }
 
-                    error!("Attempt {ctr} failed: {error}, retrying...");
+                    debug!("Attempt {ctr} failed: {error}, retrying...");
                 }
             }
 
@@ -65,11 +65,11 @@ pub trait Send: Read + Write {
 
         let mut response = [0];
         self.read_exact(&mut response)?;
-        info!("Received {response:#02X?}");
+        trace!("Received {response:#02X?}");
         let [byte] = response;
         let mut excess = Vec::new();
         self.read_to_end(&mut excess).ignore_timeout()?;
-        info!(
+        trace!(
             "Received {} excess bytes: {:#04X}",
             excess.len(),
             HexSlice::new(&excess)
