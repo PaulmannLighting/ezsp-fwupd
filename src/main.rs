@@ -4,9 +4,11 @@ use std::fs::read;
 use std::path::PathBuf;
 use std::time::Duration;
 
+use crate::fwupd::FrameCount;
 use ashv2::BaudRate;
 use clap::Parser;
 use fwupd::{Fwupd, Tty};
+use indicatif::ProgressBar;
 use log::error;
 use serialport::FlowControl;
 
@@ -55,12 +57,16 @@ async fn main() {
     let args = Args::parse();
     let firmware: Vec<u8> =
         args.firmware().expect("Failed to read firmware file")[args.offset..].to_vec();
+    let frame_count = firmware.frame_count();
+    let progress_bar = ProgressBar::new(frame_count as u64);
+
     Tty::new(args.tty, BaudRate::RstCts, FlowControl::Software)
         .fwupd(
             firmware,
             args.timeout.map(Duration::from_millis),
             !args.no_prepare,
             args.reset,
+            Some(progress_bar),
         )
         .await
         .unwrap_or_else(|err| {

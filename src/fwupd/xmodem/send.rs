@@ -1,6 +1,7 @@
 use std::io::{ErrorKind, Read, Write};
 
 use ashv2::HexSlice;
+use indicatif::ProgressBar;
 use log::{error, info};
 
 use super::frame::{ACK, EOT, Frame, NAK};
@@ -11,24 +12,17 @@ const MAX_RETRIES: usize = 10;
 
 pub trait Send: Read + Write {
     /// Sends a file using the XMODEM protocol.
-    fn send<T>(
-        &mut self,
-        data: T,
-        callback: Option<Box<dyn Fn(usize)>>,
-    ) -> std::io::Result<Box<[u8]>>
+    fn send<T>(&mut self, data: T, progress_bar: Option<&ProgressBar>) -> std::io::Result<Box<[u8]>>
     where
         T: IntoIterator<Item = u8>,
-        <T as IntoIterator>::IntoIter: ExactSizeIterator,
     {
         info!("Starting XMODEM file transfer...");
-        let iter = data.into_iter();
-        let len = iter.len();
 
-        for (index, frame) in Frames::new(iter).enumerate() {
+        for (index, frame) in Frames::new(data.into_iter()).enumerate() {
             self.send_frame(index, frame)?;
 
-            if let Some(ref callback) = callback {
-                callback(len * 100 / (index + 1));
+            if let Some(ref progress_bar) = progress_bar {
+                progress_bar.inc(1);
             }
         }
 
@@ -36,11 +30,6 @@ pub trait Send: Read + Write {
         self.flush()?;
         let mut buffer = Vec::new();
         self.read_to_end(&mut buffer).ignore_timeout()?;
-
-        if let Some(ref callback) = callback {
-            callback(100);
-        }
-
         Ok(buffer.into_boxed_slice())
     }
 

@@ -3,6 +3,7 @@ use std::time::Duration;
 use ashv2::HexSlice;
 use ezsp::uart::Uart;
 use ezsp::{Bootloader, Callback};
+use indicatif::ProgressBar;
 use log::{debug, error, info};
 use serialport::SerialPort;
 use tokio::sync::mpsc::channel;
@@ -10,6 +11,7 @@ use tokio::sync::mpsc::channel;
 use crate::ignore_timeout::IgnoreTimeout;
 use clear_buffer::ClearBuffer;
 pub use tty::Tty;
+pub use xmodem::FrameCount;
 use xmodem::Send;
 
 mod clear_buffer;
@@ -23,6 +25,7 @@ pub trait Fwupd {
         timeout: Option<Duration>,
         prepare: bool,
         reset_only: bool,
+        progress_bar: Option<ProgressBar>,
     ) -> impl Future<Output = std::io::Result<()>>;
 }
 
@@ -33,6 +36,7 @@ impl Fwupd for Tty {
         timeout: Option<Duration>,
         prepare: bool,
         reset_only: bool,
+        progress_bar: Option<ProgressBar>,
     ) -> std::io::Result<()> {
         if reset_only {
             info!("Only resetting the device...");
@@ -56,25 +60,43 @@ impl Fwupd for Tty {
 
         serial_port.clear_buffer()?;
 
-        if let Err(error) = serial_port.transmit(firmware, Some(original_timeout)) {
+        if let Err(error) =
+            serial_port.transmit(firmware, Some(original_timeout), progress_bar.as_ref())
+        {
             serial_port.reset(timeout)?;
             return Err(error);
         }
 
-        serial_port.reset(timeout)
+        serial_port.reset(timeout)?;
+
+        if let Some(progress_bar) = progress_bar.as_ref() {
+            progress_bar.finish();
+        }
+
+        Ok(())
     }
 }
 
 pub trait Transmit {
     /// Transmit the firmware to the device using the XMODEM protocol.
-    fn transmit(&mut self, firmware: Vec<u8>, timeout: Option<Duration>) -> std::io::Result<()>;
+    fn transmit(
+        &mut self,
+        firmware: Vec<u8>,
+        timeout: Option<Duration>,
+        progress_bar: Option<&ProgressBar>,
+    ) -> std::io::Result<()>;
 }
 
 impl<T> Transmit for T
 where
     T: SerialPort,
 {
-    fn transmit(&mut self, firmware: Vec<u8>, timeout: Option<Duration>) -> std::io::Result<()> {
+    fn transmit(
+        &mut self,
+        firmware: Vec<u8>,
+        timeout: Option<Duration>,
+        progress_bar: Option<&ProgressBar>,
+    ) -> std::io::Result<()> {
         // TODO: What does this do?
         self.write_all(&[0x0A])?;
         let mut resp1 = [0; 69];
@@ -98,7 +120,7 @@ where
         }
 
         info!("Sending firmware...");
-        let response = self.send(firmware, None)?;
+        let response = self.send(firmware, progress_bar)?;
         debug!("Firmware sent response: {:#04X}", HexSlice::new(&response));
 
         Ok(())
