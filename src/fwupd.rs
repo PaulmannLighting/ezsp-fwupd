@@ -1,9 +1,13 @@
+use std::io::{Read, Write};
+
+use ashv2::HexSlice;
 use ezsp::uart::Uart;
 use ezsp::{Bootloader, Callback};
 use log::{error, info};
 use serialport::SerialPort;
 use tokio::sync::mpsc::channel;
 
+use crate::ignore_timeout::IgnoreTimeout;
 use clear_buffer::ClearBuffer;
 pub use tty::Tty;
 use xmodem::Send;
@@ -18,6 +22,22 @@ pub async fn update_firmware(tty: Tty, firmware: Vec<u8>) -> std::io::Result<Box
     let mut serial_port = tty.open()?;
     info!("Clearing buffer...");
     serial_port.clear_buffer()?;
+
+    // TODO: What does this do?
+    serial_port.write_all(&[0x0A])?;
+    let mut resp1 = [0; 69];
+    info!("Waiting for initial response...");
+    serial_port.read_exact(&mut resp1).ignore_timeout()?;
+    info!("Received initial response: {:#04X}", HexSlice::new(&resp1));
+
+    // TODO: What does this do?
+    info!("Sending start signal...");
+    serial_port.write_all(&[0x31])?;
+    let mut resp2 = [0; 21];
+    info!("Waiting for second response...");
+    serial_port.read_exact(&mut resp2).ignore_timeout()?;
+    info!("Received second response: {:#04X}", HexSlice::new(&resp2));
+
     info!("Sending firmware...");
     serial_port.send(firmware)
 }
