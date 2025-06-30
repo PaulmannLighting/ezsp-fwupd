@@ -23,7 +23,7 @@ pub trait Send: Read + Write {
         self.write_all(&[EOT])?;
         self.flush()?;
         let mut buffer = Vec::new();
-        self.read_to_end(&mut buffer)?;
+        self.read_to_end(&mut buffer).ignore_timeout()?;
         Ok(buffer.into_boxed_slice())
     }
 
