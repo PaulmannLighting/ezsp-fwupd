@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use ashv2::BaudRate;
 use clap::Parser;
-use fwupd::{Tty, update_firmware};
+use fwupd::{Fwupd, Tty};
 use log::error;
 use serialport::FlowControl;
 
@@ -55,18 +55,16 @@ async fn main() {
     let args = Args::parse();
     let firmware: Vec<u8> =
         args.firmware().expect("Failed to read firmware file")[args.offset..].to_vec();
-    let tty = Tty::new(args.tty, BaudRate::RstCts, FlowControl::Software);
-
-    update_firmware(
-        tty,
-        firmware,
-        args.timeout.map(Duration::from_millis),
-        !args.no_prepare,
-        args.reset,
-    )
-    .await
-    .unwrap_or_else(|err| {
-        error!("Firmware update failed: {err}");
-        std::process::exit(1);
-    });
+    Tty::new(args.tty, BaudRate::RstCts, FlowControl::Software)
+        .fwupd(
+            firmware,
+            args.timeout.map(Duration::from_millis),
+            !args.no_prepare,
+            args.reset,
+        )
+        .await
+        .unwrap_or_else(|err| {
+            error!("Firmware update failed: {err}");
+            std::process::exit(1);
+        });
 }
