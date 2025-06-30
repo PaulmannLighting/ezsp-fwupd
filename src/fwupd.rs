@@ -23,8 +23,6 @@ pub trait Fwupd {
         &self,
         firmware: Vec<u8>,
         timeout: Option<Duration>,
-        prepare: bool,
-        reset_only: bool,
         progress_bar: Option<ProgressBar>,
     ) -> impl Future<Output = std::io::Result<()>>;
 }
@@ -34,22 +32,10 @@ impl Fwupd for Tty {
         &self,
         firmware: Vec<u8>,
         timeout: Option<Duration>,
-        prepare: bool,
-        reset_only: bool,
         progress_bar: Option<ProgressBar>,
     ) -> std::io::Result<()> {
-        if reset_only {
-            info!("Only resetting the device...");
-            return self.open()?.reset(timeout);
-        }
-
-        if prepare {
-            info!("Preparing bootloader...");
-            if let Err(error) = self.open()?.prepare_bootloader().await {
-                self.open()?.reset(timeout)?;
-                return Err(error);
-            }
-        }
+        info!("Preparing bootloader...");
+        self.open()?.prepare_bootloader().await?;
 
         let mut serial_port = self.open()?;
         let original_timeout = serial_port.timeout();
@@ -59,6 +45,12 @@ impl Fwupd for Tty {
         }
 
         serial_port.clear_buffer()?;
+
+        debug!("Initializing stage 1...");
+        serial_port.init_stage1()?;
+
+        debug!("Initializing stage 2...");
+        serial_port.init_stage2()?;
 
         if let Err(error) =
             serial_port.transmit(firmware, Some(original_timeout), progress_bar.as_ref())
@@ -78,6 +70,12 @@ impl Fwupd for Tty {
 }
 
 pub trait Transmit {
+    /// Initialize the first stage of the firmware update process.
+    fn init_stage1(&mut self) -> std::io::Result<()>;
+
+    /// Initialize the second stage of the firmware update process.
+    fn init_stage2(&mut self) -> std::io::Result<()>;
+
     /// Transmit the firmware to the device using the XMODEM protocol.
     fn transmit(
         &mut self,
@@ -91,27 +89,31 @@ impl<T> Transmit for T
 where
     T: SerialPort,
 {
-    fn transmit(
-        &mut self,
-        firmware: Vec<u8>,
-        timeout: Option<Duration>,
-        progress_bar: Option<&ProgressBar>,
-    ) -> std::io::Result<()> {
-        // TODO: What does this do?
+    fn init_stage1(&mut self) -> std::io::Result<()> {
         self.write_all(&[0x0A])?;
         let mut resp1 = [0; 69];
         info!("Waiting for initial response...");
         self.read_exact(&mut resp1).ignore_timeout()?;
         info!("Received initial response: {:#04X}", HexSlice::new(&resp1));
+        Ok(())
+    }
 
-        // TODO: What does this do?
+    fn init_stage2(&mut self) -> std::io::Result<()> {
         info!("Sending start signal...");
         self.write_all(&[0x31])?;
         let mut resp2 = [0; 21];
         info!("Waiting for second response...");
         self.read_exact(&mut resp2).ignore_timeout()?;
         info!("Received second response: {:#04X}", HexSlice::new(&resp2));
+        Ok(())
+    }
 
+    fn transmit(
+        &mut self,
+        firmware: Vec<u8>,
+        timeout: Option<Duration>,
+        progress_bar: Option<&ProgressBar>,
+    ) -> std::io::Result<()> {
         if let Some(timeout) = timeout {
             info!("Setting timeout to {timeout:?}");
             self.set_timeout(timeout)?;
