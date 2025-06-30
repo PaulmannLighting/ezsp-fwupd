@@ -1,13 +1,13 @@
 //! A firmware update utility for devices using the `ASHv2` and `XMODEM` protocols.
 
-use std::fs::read;
-use std::path::PathBuf;
-
 use ashv2::BaudRate;
 use clap::Parser;
 use fwupd::{Tty, update_firmware};
 use log::error;
 use serialport::FlowControl;
+use std::fs::read;
+use std::path::PathBuf;
+use std::time::Duration;
 
 mod fwupd;
 mod ignore_timeout;
@@ -31,6 +31,12 @@ struct Args {
         help = "do not prepare the bootloader before uploading the firmware"
     )]
     no_prepare: bool,
+    #[clap(
+        long,
+        short,
+        help = "the timeout in milliseconds for the firmware update"
+    )]
+    timeout: Option<u64>,
 }
 
 impl Args {
@@ -47,10 +53,15 @@ async fn main() {
         args.firmware().expect("Failed to read firmware file")[args.offset..].to_vec();
     let tty = Tty::new(args.tty, BaudRate::RstCts, FlowControl::Software);
 
-    update_firmware(tty, firmware, !args.no_prepare)
-        .await
-        .unwrap_or_else(|err| {
-            error!("Firmware update failed: {err}");
-            std::process::exit(1);
-        });
+    update_firmware(
+        tty,
+        firmware,
+        args.timeout.map(Duration::from_millis),
+        !args.no_prepare,
+    )
+    .await
+    .unwrap_or_else(|err| {
+        error!("Firmware update failed: {err}");
+        std::process::exit(1);
+    });
 }

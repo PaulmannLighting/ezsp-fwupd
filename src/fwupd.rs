@@ -1,4 +1,5 @@
 use std::io::{Read, Write};
+use std::time::Duration;
 
 use ashv2::HexSlice;
 use ezsp::uart::Uart;
@@ -19,6 +20,7 @@ mod xmodem;
 pub async fn update_firmware(
     tty: Tty,
     firmware: Vec<u8>,
+    timeout: Option<Duration>,
     prepare: bool,
 ) -> std::io::Result<Box<[u8]>> {
     if prepare {
@@ -29,7 +31,10 @@ pub async fn update_firmware(
     let mut serial_port = tty.open()?;
     info!("Clearing buffer...");
     serial_port.clear_buffer()?;
-    serial_port.set_timeout(std::time::Duration::from_millis(1000))?;
+
+    if let Some(timeout) = timeout {
+        serial_port.set_timeout(timeout)?;
+    }
 
     // TODO: What does this do?
     serial_port.write_all(&[0x0A])?;
