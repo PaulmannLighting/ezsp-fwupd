@@ -1,9 +1,9 @@
+use super::frame::{ACK, EOT, Frame, NAK};
+use super::frames::Frames;
+use crate::ignore_timeout::IgnoreTimeout;
 use ashv2::HexSlice;
 use log::{error, info};
 use std::io::{ErrorKind, Read, Write};
-
-use super::frame::{ACK, EOT, Frame, NAK};
-use super::frames::Frames;
 
 const MAX_RETRIES: usize = 10;
 
@@ -19,7 +19,7 @@ pub trait Send: Read + Write {
         self.write_all(&[0x0A])?;
         let mut resp1 = [0; 69];
         info!("Waiting for initial response...");
-        self.read_exact(&mut resp1)?;
+        self.read_exact(&mut resp1).ignore_timeout()?;
         info!("Received initial response: {:#04X}", HexSlice::new(&resp1));
 
         // TODO: Does this belong here?
@@ -27,7 +27,7 @@ pub trait Send: Read + Write {
         self.write_all(&[0x31])?;
         let mut resp2 = [0; 21];
         info!("Waiting for second response...");
-        self.read_exact(&mut resp2)?;
+        self.read_exact(&mut resp2).ignore_timeout()?;
         info!("Received second response: {:#04X}", HexSlice::new(&resp2));
 
         for (index, frame) in Frames::new(data.into_iter()).enumerate() {
