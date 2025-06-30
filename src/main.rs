@@ -10,6 +10,7 @@ use log::error;
 use serialport::FlowControl;
 
 mod fwupd;
+mod ignore_timeout;
 
 #[derive(Debug, Parser)]
 struct Args {
