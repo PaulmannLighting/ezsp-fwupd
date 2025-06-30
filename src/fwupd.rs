@@ -22,6 +22,7 @@ pub async fn update_firmware(tty: Tty, firmware: Vec<u8>) -> std::io::Result<Box
     let mut serial_port = tty.open()?;
     info!("Clearing buffer...");
     serial_port.clear_buffer()?;
+    serial_port.set_timeout(std::time::Duration::from_millis(1000))?;
 
     // TODO: What does this do?
     serial_port.write_all(&[0x0A])?;
