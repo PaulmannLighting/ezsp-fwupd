@@ -1,13 +1,14 @@
 //! A firmware update utility for devices using the `ASHv2` and `XMODEM` protocols.
 
+use std::fs::read;
+use std::path::PathBuf;
+use std::time::Duration;
+
 use ashv2::BaudRate;
 use clap::Parser;
 use fwupd::{Tty, update_firmware};
 use log::error;
 use serialport::FlowControl;
-use std::fs::read;
-use std::path::PathBuf;
-use std::time::Duration;
 
 mod fill;
 mod fwupd;
@@ -38,6 +39,8 @@ struct Args {
         help = "the timeout in milliseconds for the firmware update"
     )]
     timeout: Option<u64>,
+    #[clap(long, help = "reset the device after the firmware update")]
+    reset_only: bool,
 }
 
 impl Args {
@@ -59,6 +62,7 @@ async fn main() {
         firmware,
         args.timeout.map(Duration::from_millis),
         !args.no_prepare,
+        args.reset_only,
     )
     .await
     .unwrap_or_else(|err| {

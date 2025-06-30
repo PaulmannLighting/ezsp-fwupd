@@ -1,10 +1,9 @@
-use std::io::{Read, Write};
 use std::time::Duration;
 
 use ashv2::HexSlice;
 use ezsp::uart::Uart;
 use ezsp::{Bootloader, Callback};
-use log::{error, info};
+use log::{debug, error, info};
 use serialport::SerialPort;
 use tokio::sync::mpsc::channel;
 
@@ -22,13 +21,28 @@ pub async fn update_firmware(
     firmware: Vec<u8>,
     timeout: Option<Duration>,
     prepare: bool,
-) -> std::io::Result<Box<[u8]>> {
-    if prepare {
+    reset_only: bool,
+) -> std::io::Result<()> {
+    if prepare && !reset_only {
         info!("Preparing bootloader...");
         prepare_bootloader(tty.open()?).await?;
     }
 
     let mut serial_port = tty.open()?;
+
+    if !reset_only {
+        transmit_firmware(&mut serial_port, firmware, timeout)?;
+    }
+
+    reset(serial_port)
+}
+
+/// Transmit the firmware to the device using the XMODEM protocol.
+fn transmit_firmware(
+    mut serial_port: impl SerialPort,
+    firmware: Vec<u8>,
+    timeout: Option<Duration>,
+) -> std::io::Result<()> {
     info!("Clearing buffer...");
     serial_port.clear_buffer()?;
 
@@ -52,7 +66,16 @@ pub async fn update_firmware(
     info!("Received second response: {:#04X}", HexSlice::new(&resp2));
 
     info!("Sending firmware...");
-    serial_port.send(firmware)
+    let response = serial_port.send(firmware)?;
+    debug!("Firmware sent response: {:#04X}", HexSlice::new(&response));
+
+    Ok(())
+}
+
+/// Reset the device and finalize the firmware update process.
+fn reset(mut serial_port: impl SerialPort) -> std::io::Result<()> {
+    info!("Resetting serial port...");
+    serial_port.write_all(&[0x0A, 0x32])
 }
 
 async fn prepare_bootloader(serial_port: impl SerialPort + 'static) -> std::io::Result<()> {

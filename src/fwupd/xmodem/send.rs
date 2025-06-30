@@ -24,7 +24,6 @@ pub trait Send: Read + Write {
         self.flush()?;
         let mut buffer = Vec::new();
         self.read_to_end(&mut buffer)?;
-        self.write_all(&[0x0A, 0x32])?;
         Ok(buffer.into_boxed_slice())
     }
 
