@@ -1,10 +1,10 @@
+use ezsp::uart::Uart;
+use ezsp::{Bootloader, Callback};
 use log::{error, info};
+use serialport::SerialPort;
 use tokio::sync::mpsc::channel;
 
 use clear_buffer::ClearBuffer;
-use ezsp::uart::Uart;
-use ezsp::{Bootloader, Callback};
-use serialport::SerialPort;
 pub use tty::Tty;
 use xmodem::Send;
 
