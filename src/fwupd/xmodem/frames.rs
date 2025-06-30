@@ -51,6 +51,15 @@ where
     }
 }
 
+impl<T> ExactSizeIterator for Frames<T>
+where
+    T: Iterator<Item = u8> + ExactSizeIterator,
+{
+    fn len(&self) -> usize {
+        self.bytes.len().div_ceil(PAYLOAD_SIZE)
+    }
+}
+
 impl<T> From<T> for Frames<T::IntoIter>
 where
     T: IntoIterator<Item = u8>,

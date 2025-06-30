@@ -98,7 +98,7 @@ where
         }
 
         info!("Sending firmware...");
-        let response = self.send(firmware)?;
+        let response = self.send(firmware, None)?;
         debug!("Firmware sent response: {:#04X}", HexSlice::new(&response));
 
         Ok(())
