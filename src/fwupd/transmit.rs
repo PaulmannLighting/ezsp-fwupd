@@ -66,7 +66,11 @@ where
             debug!("Using default timeout");
         }
 
-        debug!("Sending firmware...");
+        if let Some(progress_bar) = progress_bar {
+            progress_bar.set_message("Flashing firmware...");
+        }
+
+        debug!("Transmitting firmware...");
         let response = self.send(firmware, progress_bar)?;
         debug!("Firmware sent response: {:#04X}", HexSlice::new(&response));
 

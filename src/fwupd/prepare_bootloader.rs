@@ -30,7 +30,7 @@ where
         {
             Ok(info) => {
                 if let Some(progress_bar) = progress_bar {
-                    progress_bar.set_message(format!("{info:?}"));
+                    progress_bar.println(format!("{info:?}"));
                 } else {
                     info!("Bootloader info: {info:#?}");
                 }

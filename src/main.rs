@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use ashv2::BaudRate;
 use clap::{Parser, Subcommand};
-use indicatif::ProgressBar;
+use indicatif::{ProgressBar, ProgressStyle};
 use le_stream::FromLeStream;
 use log::error;
 use serialport::FlowControl;
@@ -84,7 +84,14 @@ async fn main() {
                 .expect("Failed to validate ota file");
             let firmware = ota_file.payload().to_vec();
             let progress_bar = ProgressBar::new(firmware.frame_count() as u64);
-            progress_bar.set_message(ota_file.to_string());
+            progress_bar.set_style(
+                ProgressStyle::with_template(
+                    "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}",
+                )
+                .unwrap()
+                .progress_chars("##-"),
+            );
+            progress_bar.println(ota_file.to_string());
 
             Tty::new(tty, BaudRate::RstCts, FlowControl::Software)
                 .fwupd(
