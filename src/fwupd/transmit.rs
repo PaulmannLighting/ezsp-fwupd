@@ -1,3 +1,4 @@
+use std::io::Read;
 use std::time::Duration;
 
 use ashv2::HexSlice;
@@ -9,7 +10,9 @@ use crate::ignore_timeout::IgnoreTimeout;
 use crate::xmodem::Send;
 
 const INIT_STAGE1: &[u8] = &[0x0A];
+const INIT_STAGE1_RESPONSE_SIZE: usize = 69;
 const INIT_STAGE2: &[u8] = &[0x31];
+const INIT_STAGE2_RESPONSE_SIZE: usize = 21;
 
 /// Trait for transmitting firmware to a device using the XMODEM protocol.
 pub trait Transmit {
@@ -35,9 +38,9 @@ where
     fn init_stage1(&mut self) -> std::io::Result<()> {
         debug!("Firmware update stage 1 initialization...");
         self.write_all(INIT_STAGE1)?;
-        let mut response = Vec::new();
+        let mut response = [0; INIT_STAGE1_RESPONSE_SIZE];
         debug!("Waiting for response...");
-        self.read_to_end(&mut response).ignore_timeout()?;
+        self.read_exact(&mut response)?;
         trace!("Received response: {:#04X}", HexSlice::new(&response));
         Ok(())
     }
@@ -45,9 +48,9 @@ where
     fn init_stage2(&mut self) -> std::io::Result<()> {
         debug!("Firmware update stage 2 initialization...");
         self.write_all(INIT_STAGE2)?;
-        let mut response = Vec::new();
+        let mut response = [0; INIT_STAGE2_RESPONSE_SIZE];
         debug!("Waiting for response...");
-        self.read_to_end(&mut response).ignore_timeout()?;
+        self.read_exact(&mut response)?;
         trace!("Received response: {:#04X}", HexSlice::new(&response));
         Ok(())
     }
