@@ -42,7 +42,7 @@ impl Frame {
         result[1] = self.blk;
         result[2] = self.cmp;
         result[PAYLOAD_OFFSET..PAYLOAD_SIZE + PAYLOAD_OFFSET].copy_from_slice(&self.data);
-        result[PACKET_SIZE - 2..PACKET_SIZE].copy_from_slice(&self.chk.to_le_bytes());
+        result[PACKET_SIZE - 2..PACKET_SIZE].copy_from_slice(&self.chk.to_be_bytes());
         result
     }
 }
