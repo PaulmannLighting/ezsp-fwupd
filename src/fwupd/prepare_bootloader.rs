@@ -1,5 +1,6 @@
 use ezsp::{Bootloader, Callback, uart::Uart};
-use log::{debug, error};
+use indicatif::ProgressBar;
+use log::{debug, error, info};
 use serialport::SerialPort;
 use tokio::sync::mpsc::channel;
 
@@ -8,14 +9,17 @@ const MODE: u8 = 0x00;
 /// Trait for preparing the bootloader for firmware updates.
 pub trait PrepareBootloader {
     /// Prepare the bootloader for firmware updates.
-    fn prepare_bootloader(self) -> impl Future<Output = std::io::Result<()>>;
+    fn prepare_bootloader(
+        self,
+        progress_bar: Option<&ProgressBar>,
+    ) -> impl Future<Output = std::io::Result<()>>;
 }
 
 impl<T> PrepareBootloader for T
 where
     T: SerialPort + 'static,
 {
-    async fn prepare_bootloader(self) -> std::io::Result<()> {
+    async fn prepare_bootloader(self, progress_bar: Option<&ProgressBar>) -> std::io::Result<()> {
         let (callbacks_tx, _callbacks_rx) = channel::<Callback>(8);
         let mut uart = Uart::new(self, callbacks_tx, 8, 8);
 
@@ -25,7 +29,11 @@ where
             .await
         {
             Ok(info) => {
-                println!("Bootloader info: {info:#?}");
+                if let Some(progress_bar) = progress_bar {
+                    progress_bar.set_message(format!("{info:?}"));
+                } else {
+                    info!("Bootloader info: {info:#?}");
+                }
             }
             Err(error) => {
                 error!("Failed to get bootloader info: {error}");

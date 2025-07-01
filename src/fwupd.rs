@@ -37,7 +37,9 @@ impl Fwupd for Tty {
     ) -> std::io::Result<()> {
         if !no_prepare {
             info!("Preparing bootloader...");
-            self.open()?.prepare_bootloader().await?;
+            self.open()?
+                .prepare_bootloader(progress_bar.as_ref())
+                .await?;
         }
 
         let mut serial_port = self.open()?;
