@@ -1,7 +1,8 @@
-use ashv2::HexSlice;
-use log::{debug, info};
-use serialport::SerialPort;
 use std::time::Duration;
+
+use ashv2::HexSlice;
+use log::debug;
+use serialport::SerialPort;
 
 use crate::ignore_timeout::IgnoreTimeout;
 
@@ -19,13 +20,13 @@ where
         let original_timeout = self.timeout();
 
         if let Some(timeout) = timeout {
-            info!("Setting reset timeout to {timeout:?}");
+            debug!("Setting reset timeout to {timeout:?}");
             self.set_timeout(timeout)?;
         } else {
-            info!("Using default timeout for reset");
+            debug!("Using default timeout for reset");
         }
 
-        info!("Resetting serial port...");
+        debug!("Resetting serial port...");
         self.flush()?;
         self.write_all(&[0x0A, 0x32])?;
         self.flush()?;

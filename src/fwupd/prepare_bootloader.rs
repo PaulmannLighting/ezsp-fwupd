@@ -1,5 +1,5 @@
 use ezsp::{Bootloader, Callback, uart::Uart};
-use log::{error, info};
+use log::{debug, error};
 use serialport::SerialPort;
 use tokio::sync::mpsc::channel;
 
@@ -17,13 +17,13 @@ where
         let (callbacks_tx, _callbacks_rx) = channel::<Callback>(8);
         let mut uart = Uart::new(self, callbacks_tx, 8, 8);
 
-        info!("Getting bootloader version...");
+        debug!("Getting bootloader version...");
         match uart
             .get_standalone_bootloader_version_plat_micro_phy()
             .await
         {
             Ok(info) => {
-                info!("Bootloader info: {info:#?}");
+                debug!("Bootloader info: {info:#?}");
             }
             Err(error) => {
                 error!("Failed to get bootloader info: {error}");
@@ -31,7 +31,7 @@ where
             }
         }
 
-        info!("Launching standalone bootloader...");
+        debug!("Launching standalone bootloader...");
         uart.launch_standalone_bootloader(0x00)
             .await
             .unwrap_or_else(|error| {
