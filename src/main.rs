@@ -4,15 +4,17 @@ use std::fs::read;
 use std::path::PathBuf;
 use std::time::Duration;
 
+use crate::ota_file::OtaFile;
 use ashv2::BaudRate;
 use clap::{Parser, Subcommand};
+use ezsp::uart::Uart;
+use ezsp::{Bootloader, Callback};
+use fwupd::{FrameCount, Fwupd, Reset, Tty};
 use indicatif::{ProgressBar, ProgressStyle};
 use le_stream::FromLeStream;
-use log::error;
+use log::{debug, error};
 use serialport::FlowControl;
-
-use crate::ota_file::OtaFile;
-use fwupd::{FrameCount, Fwupd, Reset, Tty};
+use tokio::sync::mpsc::channel;
 
 const DEFAULT_TIMEOUT: u64 = 1000; // Default timeout in milliseconds
 
@@ -30,12 +32,6 @@ struct Args {
 
 #[derive(Debug, Subcommand)]
 enum Action {
-    Reset {
-        #[clap(index = 1, help = "the serial port to use for firmware update")]
-        tty: String,
-        #[clap(long, short, help = "serial port timeout in milliseconds")]
-        timeout: Option<u64>,
-    },
     Update {
         #[clap(index = 1, help = "the serial port to use for firmware update")]
         tty: String,
@@ -45,6 +41,16 @@ enum Action {
         timeout: u64,
         #[clap(long, short, help = "offset in bytes to skip in the firmware file")]
         no_prepare: bool,
+    },
+    Reset {
+        #[clap(index = 1, help = "the serial port to use for firmware update")]
+        tty: String,
+        #[clap(long, short, help = "serial port timeout in milliseconds")]
+        timeout: Option<u64>,
+    },
+    Query {
+        #[clap(index = 1, help = "the serial port to use for firmware update")]
+        tty: String,
     },
     Ota {
         #[clap(index = 1, help = "the firmware file to upload")]
@@ -58,19 +64,6 @@ async fn main() {
     let args = Args::parse();
 
     match args.action {
-        Action::Reset { tty, timeout } => {
-            Tty::new(tty, BaudRate::RstCts, FlowControl::Software)
-                .open()
-                .unwrap_or_else(|err| {
-                    error!("Failed to open serial port: {err}");
-                    std::process::exit(1);
-                })
-                .reset(timeout.map(Duration::from_millis))
-                .unwrap_or_else(|err| {
-                    error!("Failed to reset device: {err}");
-                    std::process::exit(1);
-                });
-        }
         Action::Update {
             tty,
             firmware,
@@ -105,6 +98,46 @@ async fn main() {
                     error!("Firmware update failed: {err}");
                     std::process::exit(1);
                 });
+        }
+        Action::Reset { tty, timeout } => {
+            Tty::new(tty, BaudRate::RstCts, FlowControl::Software)
+                .open()
+                .unwrap_or_else(|err| {
+                    error!("Failed to open serial port: {err}");
+                    std::process::exit(1);
+                })
+                .reset(timeout.map(Duration::from_millis))
+                .unwrap_or_else(|err| {
+                    error!("Failed to reset device: {err}");
+                    std::process::exit(1);
+                });
+        }
+        Action::Query { tty } => {
+            let tty = Tty::new(tty, BaudRate::RstCts, FlowControl::Software)
+                .open()
+                .unwrap_or_else(|err| {
+                    error!("Failed to open serial port: {err}");
+                    std::process::exit(1);
+                });
+            let (callbacks_tx, _callbacks_rx) = channel::<Callback>(8);
+            let mut uart = Uart::new(tty, callbacks_tx, 8, 8);
+
+            debug!("Getting bootloader version...");
+            match uart
+                .get_standalone_bootloader_version_plat_micro_phy()
+                .await
+            {
+                Ok(info) => {
+                    if let Some((maj, min, rel, build)) = info.semver() {
+                        println!("{maj}.{min}.{rel}+{build}");
+                    } else {
+                        error!("Invalid bootloader version detected.");
+                    }
+                }
+                Err(error) => {
+                    error!("Failed to get bootloader info: {error}");
+                }
+            }
         }
         Action::Ota { firmware } => {
             let firmware: Vec<u8> = read(firmware).expect("Failed to read firmware file");
