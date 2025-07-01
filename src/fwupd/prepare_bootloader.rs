@@ -1,4 +1,4 @@
-use ezsp::{Bootloader, Callback, uart::Uart};
+use ezsp::{Bootloader, Callback, Ezsp, uart::Uart};
 use indicatif::ProgressBar;
 use log::{debug, error, info};
 use serialport::SerialPort;
@@ -24,20 +24,18 @@ where
         let mut uart = Uart::new(self, callbacks_tx, 8, 8);
 
         debug!("Getting bootloader version...");
-        match uart
-            .get_standalone_bootloader_version_plat_micro_phy()
-            .await
-        {
-            Ok(info) => {
+        match uart.init().await {
+            Ok((stack_type, stack_version)) => {
                 if let Some(progress_bar) = progress_bar {
-                    progress_bar.println(format!("{info:?}"));
+                    progress_bar.println(format!("Stack type: {stack_type:#04X}"));
+                    progress_bar.println(format!("Stack version: {stack_version}"));
                 } else {
-                    info!("Bootloader info: {info:#?}");
+                    info!("Stack type: {stack_type:#04X}");
+                    info!("Stack version: {stack_version}");
                 }
             }
             Err(error) => {
-                error!("Failed to get bootloader info: {error}");
-                return Err(std::io::Error::other(error));
+                error!("Failed to get version info: {error}");
             }
         }
 

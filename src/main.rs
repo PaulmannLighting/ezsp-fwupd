@@ -8,11 +8,11 @@ use crate::ota_file::OtaFile;
 use ashv2::BaudRate;
 use clap::{Parser, Subcommand};
 use ezsp::uart::Uart;
-use ezsp::{Bootloader, Callback};
+use ezsp::{Callback, Ezsp};
 use fwupd::{FrameCount, Fwupd, Reset, Tty};
 use indicatif::{ProgressBar, ProgressStyle};
 use le_stream::FromLeStream;
-use log::{debug, error};
+use log::error;
 use serialport::FlowControl;
 use tokio::sync::mpsc::channel;
 
@@ -122,20 +122,13 @@ async fn main() {
             let (callbacks_tx, _callbacks_rx) = channel::<Callback>(8);
             let mut uart = Uart::new(tty, callbacks_tx, 8, 8);
 
-            debug!("Getting bootloader version...");
-            match uart
-                .get_standalone_bootloader_version_plat_micro_phy()
-                .await
-            {
-                Ok(info) => {
-                    if let Some((maj, min, rel, build)) = info.semver() {
-                        println!("{maj}.{min}.{rel}+{build}");
-                    } else {
-                        error!("Invalid bootloader version detected.");
-                    }
+            match uart.init().await {
+                Ok((stack_type, stack_version)) => {
+                    println!("Stack type: {stack_type:#04X}");
+                    println!("Stack version: {stack_version}");
                 }
                 Err(error) => {
-                    error!("Failed to get bootloader info: {error}");
+                    error!("Failed to get version info: {error}");
                 }
             }
         }
