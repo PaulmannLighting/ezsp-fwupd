@@ -8,7 +8,7 @@ use ashv2::BaudRate;
 use clap::{Parser, Subcommand};
 use indicatif::ProgressBar;
 use le_stream::FromLeStream;
-use log::{error, info};
+use log::error;
 use serialport::FlowControl;
 
 use crate::ota_file::OtaFile;
