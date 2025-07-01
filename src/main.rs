@@ -7,14 +7,17 @@ use std::time::Duration;
 use ashv2::BaudRate;
 use clap::{Parser, Subcommand};
 use indicatif::ProgressBar;
+use le_stream::FromLeStream;
 use log::error;
 use serialport::FlowControl;
 
+use crate::ota_file::OtaFile;
 use fwupd::{FrameCount, Fwupd, Reset, Tty};
 
 mod clear_buffer;
 mod fwupd;
 mod ignore_timeout;
+mod ota_file;
 mod xmodem;
 
 #[derive(Debug, Parser)]
@@ -34,15 +37,20 @@ enum Action {
     Update {
         #[clap(index = 1, help = "the firmware file to upload")]
         firmware: PathBuf,
+        #[clap(long, short, help = "serial port timeout in milliseconds")]
+        timeout: Option<u64>,
+        #[clap(long, short, help = "offset in bytes to skip in the firmware file")]
+        offset: usize,
         #[clap(
             long,
             short,
-            help = "the offset in the firmware file to start uploading from",
-            default_value_t = 0
+            help = "do not prepare the bootloader before firmware update"
         )]
-        offset: usize,
-        #[clap(long, short, help = "serial port timeout in milliseconds")]
-        timeout: Option<u64>,
+        no_prepare: bool,
+    },
+    Ota {
+        #[clap(index = 1, help = "the firmware file to upload")]
+        firmware: PathBuf,
     },
 }
 
@@ -67,8 +75,9 @@ async fn main() {
         }
         Action::Update {
             firmware,
-            offset,
             timeout,
+            offset,
+            no_prepare,
         } => {
             let firmware: Vec<u8> =
                 read(firmware).expect("Failed to read firmware file")[offset..].to_vec();
@@ -78,6 +87,7 @@ async fn main() {
                 .fwupd(
                     firmware,
                     timeout.map(Duration::from_millis),
+                    no_prepare,
                     Some(progress_bar),
                 )
                 .await
@@ -85,6 +95,24 @@ async fn main() {
                     error!("Firmware update failed: {err}");
                     std::process::exit(1);
                 });
+        }
+        Action::Ota { firmware } => {
+            let firmware: Vec<u8> = read(firmware).expect("Failed to read firmware file");
+            println!(
+                "Raw first 66 bytes: {:#04X}",
+                ashv2::HexSlice::new(&firmware[..66])
+            );
+            let ota_file = OtaFile::from_le_stream_exact(firmware.into_iter())
+                .expect("Failed to read ota file");
+            let header = ota_file.header();
+            println!("OTA header: {header:?}");
+            println!("OTA footer: {:?}", ota_file.footer());
+            println!("Header string: {}", header.header_string());
+            println!(
+                "Size: {} / {}",
+                header.image_size(),
+                ota_file.payload().len()
+            );
         }
     }
 }

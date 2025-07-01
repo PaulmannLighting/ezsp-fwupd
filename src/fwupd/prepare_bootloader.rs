@@ -25,7 +25,7 @@ where
             .await
         {
             Ok(info) => {
-                debug!("Bootloader info: {info:#?}");
+                println!("Bootloader info: {info:#?}");
             }
             Err(error) => {
                 error!("Failed to get bootloader info: {error}");

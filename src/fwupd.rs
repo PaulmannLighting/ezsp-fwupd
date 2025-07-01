@@ -22,6 +22,7 @@ pub trait Fwupd {
         &self,
         firmware: Vec<u8>,
         timeout: Option<Duration>,
+        no_prepare: bool,
         progress_bar: Option<ProgressBar>,
     ) -> impl Future<Output = std::io::Result<()>>;
 }
@@ -31,10 +32,13 @@ impl Fwupd for Tty {
         &self,
         firmware: Vec<u8>,
         timeout: Option<Duration>,
+        no_prepare: bool,
         progress_bar: Option<ProgressBar>,
     ) -> std::io::Result<()> {
-        info!("Preparing bootloader...");
-        self.open()?.prepare_bootloader().await?;
+        if !no_prepare {
+            info!("Preparing bootloader...");
+            self.open()?.prepare_bootloader().await?;
+        }
 
         let mut serial_port = self.open()?;
         let original_timeout = serial_port.timeout();
