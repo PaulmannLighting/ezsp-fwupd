@@ -14,6 +14,8 @@ use serialport::FlowControl;
 use crate::ota_file::OtaFile;
 use fwupd::{FrameCount, Fwupd, Reset, Tty};
 
+const DEFAULT_TIMEOUT: u64 = 1000; // Default timeout in milliseconds
+
 mod clear_buffer;
 mod fwupd;
 mod ignore_timeout;
@@ -39,8 +41,8 @@ enum Action {
         tty: String,
         #[clap(index = 2, help = "the firmware file to upload")]
         firmware: PathBuf,
-        #[clap(long, short, help = "serial port timeout in milliseconds")]
-        timeout: Option<u64>,
+        #[clap(long, short, help = "serial port timeout in milliseconds", default_value_t = DEFAULT_TIMEOUT)]
+        timeout: u64,
         #[clap(long, short, help = "offset in bytes to skip in the firmware file")]
         no_prepare: bool,
     },
@@ -87,7 +89,7 @@ async fn main() {
             Tty::new(tty, BaudRate::RstCts, FlowControl::Software)
                 .fwupd(
                     firmware,
-                    timeout.map(Duration::from_millis),
+                    Some(Duration::from_millis(timeout)),
                     no_prepare,
                     Some(progress_bar),
                 )
