@@ -124,9 +124,9 @@ async fn main() {
 
             match uart.init().await {
                 Ok(response) => {
-                    info!("EZSP version:  {:#04X}", response.protocol_version());
-                    info!("Stack type:    {:#04X}", response.stack_type());
-                    info!("Stack version: {}", response.stack_version());
+                    println!("EZSP version:  {:#04X}", response.protocol_version());
+                    println!("Stack type:    {:#04X}", response.stack_type());
+                    println!("Stack version: {}", response.stack_version());
                 }
                 Err(error) => {
                     error!("Failed to get version info: {error}");
