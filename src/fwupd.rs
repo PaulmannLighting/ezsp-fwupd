@@ -4,20 +4,18 @@ use indicatif::ProgressBar;
 use log::{debug, info};
 use serialport::SerialPort;
 
+pub use crate::xmodem::FrameCount;
 pub use reset::Reset;
 pub use tty::Tty;
-pub use xmodem::FrameCount;
 
-use clear_buffer::ClearBuffer;
+use crate::clear_buffer::ClearBuffer;
 use prepare_bootloader::PrepareBootloader;
 use transmit::Transmit;
 
-mod clear_buffer;
 mod prepare_bootloader;
 mod reset;
 mod transmit;
 mod tty;
-mod xmodem;
 
 pub trait Fwupd {
     fn fwupd(

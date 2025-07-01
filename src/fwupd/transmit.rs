@@ -5,8 +5,8 @@ use indicatif::ProgressBar;
 use log::{debug, trace};
 use serialport::SerialPort;
 
-use crate::fwupd::xmodem::Send;
 use crate::ignore_timeout::IgnoreTimeout;
+use crate::xmodem::Send;
 
 const INIT_STAGE1: &[u8] = &[0x0A];
 const INIT_STAGE2: &[u8] = &[0x31];

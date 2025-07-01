@@ -12,8 +12,10 @@ use serialport::FlowControl;
 
 use fwupd::{FrameCount, Fwupd, Reset, Tty};
 
+mod clear_buffer;
 mod fwupd;
 mod ignore_timeout;
+mod xmodem;
 
 #[derive(Debug, Parser)]
 struct Args {

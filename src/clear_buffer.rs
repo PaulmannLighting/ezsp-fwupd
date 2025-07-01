@@ -1,7 +1,8 @@
 use std::io::Read;
 
-use crate::ignore_timeout::IgnoreTimeout;
 use log::debug;
+
+use crate::ignore_timeout::IgnoreTimeout;
 
 /// Trait to clear the read buffer of a type that implements `Read`.
 pub trait ClearBuffer: Read {
