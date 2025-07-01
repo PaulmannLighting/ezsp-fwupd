@@ -9,9 +9,7 @@ use crate::fwupd::xmodem::Send;
 use crate::ignore_timeout::IgnoreTimeout;
 
 const INIT_STAGE1: &[u8] = &[0x0A];
-const INIT_STAGE1_RESPONSE_SIZE: usize = 69;
 const INIT_STAGE2: &[u8] = &[0x31];
-const INIT_STAGE2_RESPONSE_SIZE: usize = 21;
 
 /// Trait for transmitting firmware to a device using the XMODEM protocol.
 pub trait Transmit {
@@ -36,20 +34,26 @@ where
 {
     fn init_stage1(&mut self) -> std::io::Result<()> {
         self.write_all(INIT_STAGE1)?;
-        let mut resp1 = [0; INIT_STAGE1_RESPONSE_SIZE];
+        let mut response = Vec::new();
         debug!("Waiting for initial response...");
-        self.read_exact(&mut resp1).ignore_timeout()?;
-        debug!("Received initial response: {:#04X}", HexSlice::new(&resp1));
+        self.read_to_end(&mut response).ignore_timeout()?;
+        debug!(
+            "Received initial response: {:#04X}",
+            HexSlice::new(&response)
+        );
         Ok(())
     }
 
     fn init_stage2(&mut self) -> std::io::Result<()> {
         debug!("Sending start signal...");
         self.write_all(INIT_STAGE2)?;
-        let mut resp2 = [0; INIT_STAGE2_RESPONSE_SIZE];
-        debug!("Waiting for second response...");
-        self.read_exact(&mut resp2).ignore_timeout()?;
-        debug!("Received second response: {:#04X}", HexSlice::new(&resp2));
+        let mut response = Vec::new();
+        debug!("Waiting for initial response...");
+        self.read_to_end(&mut response).ignore_timeout()?;
+        debug!(
+            "Received second response: {:#04X}",
+            HexSlice::new(&response)
+        );
         Ok(())
     }
 
