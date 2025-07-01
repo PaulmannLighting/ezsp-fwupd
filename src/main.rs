@@ -123,9 +123,9 @@ async fn main() {
             let mut uart = Uart::new(tty, callbacks_tx, 8, 8);
 
             match uart.init().await {
-                Ok((stack_type, stack_version)) => {
-                    println!("Stack type: {stack_type:#04X}");
-                    println!("Stack version: {stack_version}");
+                Ok(response) => {
+                    println!("Stack type: {:#04X}", response.stack_type());
+                    println!("Stack version: {}", response.stack_version());
                 }
                 Err(error) => {
                     error!("Failed to get version info: {error}");

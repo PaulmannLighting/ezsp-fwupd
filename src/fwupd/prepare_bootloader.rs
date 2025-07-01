@@ -25,13 +25,13 @@ where
 
         debug!("Getting bootloader version...");
         match uart.init().await {
-            Ok((stack_type, stack_version)) => {
+            Ok(response) => {
                 if let Some(progress_bar) = progress_bar {
-                    progress_bar.println(format!("Stack type: {stack_type:#04X}"));
-                    progress_bar.println(format!("Stack version: {stack_version}"));
+                    progress_bar.println(format!("Stack type: {:#04X}", response.stack_type()));
+                    progress_bar.println(format!("Stack version: {}", response.stack_version()));
                 } else {
-                    info!("Stack type: {stack_type:#04X}");
-                    info!("Stack version: {stack_version}");
+                    info!("Stack type: {:#04X}", response.stack_type());
+                    info!("Stack version: {}", response.stack_version());
                 }
             }
             Err(error) => {
