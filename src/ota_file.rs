@@ -74,7 +74,7 @@ impl Display for OtaFile {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "OtaFile {{ magic: {:#04X}, header: {}, security_credentials: {}, upgrade_file_destination: {}, hardware_versions: {:?}, tags: {:?}, payload: {:#04X?} }}",
+            "OtaFile {{ magic: {:#04X}, header: {}, security_credentials: {}, upgrade_file_destination: {}, hardware_versions: {:?}, tags: [{}], payload: {:#04X?} }}",
             HexSlice::new(self.magic()),
             self.header(),
             self.security_credentials().map_or_else(
@@ -86,7 +86,11 @@ impl Display for OtaFile {
                 |upgrade_file_destination| format!("{upgrade_file_destination}")
             ),
             self.hardware_versions(),
-            self.tags(),
+            self.tags()
+                .iter()
+                .map(ToString::to_string)
+                .collect::<Vec<_>>()
+                .join(", "),
             self.payload()
         )
     }
@@ -113,7 +117,7 @@ impl FromLeStream for OtaFile {
                     Eui64::from_le_stream(&mut bytes)?,
                 )),
                 HEADER_VERSION_THREAD => Some(UpgradeFileDestination::Thread(
-                    <[u8; 32]>::from_le_stream(&mut bytes)?,
+                    <[u8; 32]>::from_le_stream(&mut bytes)?.into(),
                 )),
                 _ => None,
             }

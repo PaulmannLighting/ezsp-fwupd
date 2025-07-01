@@ -16,17 +16,17 @@ bitflags! {
 
 impl FieldControl {
     #[must_use]
-    pub fn has_security_credentials(&self) -> bool {
+    pub const fn has_security_credentials(&self) -> bool {
         self.contains(Self::SECURITY_CREDENTIAL_VERSION_FIELD_PRESENT_MASK)
     }
 
     #[must_use]
-    pub fn has_upgrade_file_destination(&self) -> bool {
+    pub const fn has_upgrade_file_destination(&self) -> bool {
         self.contains(Self::DEVICE_SPECIFIC_FILE_PRESENT_MASK)
     }
 
     #[must_use]
-    pub fn has_hardware_version(&self) -> bool {
+    pub const fn has_hardware_version(&self) -> bool {
         self.contains(Self::HARDWARE_VERSIONS_PRESENT_MASK)
     }
 }
