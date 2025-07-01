@@ -82,7 +82,7 @@ async fn main() {
                 .expect("Failed to read ota file")
                 .validate()
                 .expect("Failed to validate ota file");
-            info!("{ota_file}");
+            println!("{ota_file}");
             let firmware = ota_file.payload().to_vec();
             let progress_bar = ProgressBar::new(firmware.frame_count() as u64);
 
