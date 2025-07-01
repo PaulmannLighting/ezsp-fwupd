@@ -4,7 +4,7 @@ use std::fs::read;
 use std::path::PathBuf;
 use std::time::Duration;
 
-use ashv2::{BaudRate, HexSlice};
+use ashv2::BaudRate;
 use clap::{Parser, Subcommand};
 use indicatif::ProgressBar;
 use le_stream::FromLeStream;
@@ -42,12 +42,6 @@ enum Action {
         #[clap(long, short, help = "serial port timeout in milliseconds")]
         timeout: Option<u64>,
         #[clap(long, short, help = "offset in bytes to skip in the firmware file")]
-        offset: usize,
-        #[clap(
-            long,
-            short,
-            help = "do not prepare the bootloader before firmware update"
-        )]
         no_prepare: bool,
     },
     Ota {
@@ -79,7 +73,6 @@ async fn main() {
             tty,
             firmware,
             timeout,
-            offset,
             no_prepare,
         } => {
             let firmware: Vec<u8> = read(firmware).expect("Failed to read firmware file");

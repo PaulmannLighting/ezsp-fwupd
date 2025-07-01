@@ -1,4 +1,3 @@
-use std::io::Read;
 use std::time::Duration;
 
 use ashv2::HexSlice;
@@ -6,7 +5,6 @@ use indicatif::ProgressBar;
 use log::{debug, trace};
 use serialport::SerialPort;
 
-use crate::ignore_timeout::IgnoreTimeout;
 use crate::xmodem::Send;
 
 const INIT_STAGE1: &[u8] = &[0x0A];
