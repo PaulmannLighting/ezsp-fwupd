@@ -4,16 +4,16 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-env_logger = "0.11.8"
-log = "0.4.27"
-ezsp = { version = "0.1.0", path = "../ezsp", features = ["ashv2"] }
+env_logger = "0.11"
+log = "0.4"
+ezsp = { version = "0.1", path = "../ezsp", features = ["ashv2"] }
 ashv2 = { version = "0.2", path = "../ashv2" }
-serialport = "4.7.2"
+serialport = "4.7"
 tokio = { version = "1.44", features = ["rt", "rt-multi-thread", "macros"] }
-heapless = "0.8.0"
-clap = { version = "4.5.40", features = ["derive"] }
-crc = "3.3.0"
-indicatif = "0.17.12"
+heapless = "0.8"
+clap = { version = "4.5", features = ["derive"] }
+crc = "3.3"
+indicatif = "0.17"
 
 [profile.release]
 opt-level = 3
