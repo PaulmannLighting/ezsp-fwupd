@@ -6,6 +6,8 @@ use serialport::SerialPort;
 
 use crate::ignore_timeout::IgnoreTimeout;
 
+const RESET: &[u8] = &[0x0A, 0x32];
+
 /// Trait for resetting a device after a firmware update.
 pub trait Reset {
     /// Reset the device and finalize the firmware update process.
@@ -28,7 +30,7 @@ where
 
         debug!("Resetting serial port...");
         self.flush()?;
-        self.write_all(&[0x0A, 0x32])?;
+        self.write_all(RESET)?;
         self.flush()?;
 
         let mut buffer = Vec::new();

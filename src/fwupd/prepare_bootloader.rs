@@ -3,6 +3,8 @@ use log::{debug, error};
 use serialport::SerialPort;
 use tokio::sync::mpsc::channel;
 
+const MODE: u8 = 0x00;
+
 /// Trait for preparing the bootloader for firmware updates.
 pub trait PrepareBootloader {
     /// Prepare the bootloader for firmware updates.
@@ -32,7 +34,7 @@ where
         }
 
         debug!("Launching standalone bootloader...");
-        uart.launch_standalone_bootloader(0x00)
+        uart.launch_standalone_bootloader(MODE)
             .await
             .unwrap_or_else(|error| {
                 error!("Failed to launch standalone bootloader: {error}");
