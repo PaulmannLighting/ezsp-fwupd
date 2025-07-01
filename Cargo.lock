@@ -329,6 +329,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "ezsp-fwupd"
+version = "0.1.0"
+dependencies = [
+ "ashv2 0.2.1",
+ "clap",
+ "crc",
+ "env_logger",
+ "ezsp",
+ "heapless",
+ "indicatif",
+ "log",
+ "semver",
+ "serialport",
+ "tokio",
+]
+
+[[package]]
 name = "futures"
 version = "0.3.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1159,20 +1176,3 @@ name = "windows_x86_64_msvc"
 version = "0.53.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "271414315aff87387382ec3d271b52d7ae78726f5d44ac98b4f4030c91880486"
-
-[[package]]
-name = "zb-fwupd"
-version = "0.1.0"
-dependencies = [
- "ashv2 0.2.1",
- "clap",
- "crc",
- "env_logger",
- "ezsp",
- "heapless",
- "indicatif",
- "log",
- "semver",
- "serialport",
- "tokio",
-]

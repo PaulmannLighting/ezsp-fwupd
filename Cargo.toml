@@ -1,5 +1,5 @@
 [package]
-name = "zb-fwupd"
+name = "ezsp-fwupd"
 version = "0.1.0"
 edition = "2024"
 
