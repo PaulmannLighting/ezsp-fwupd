@@ -82,9 +82,9 @@ async fn main() {
                 .expect("Failed to read ota file")
                 .validate()
                 .expect("Failed to validate ota file");
-            println!("{ota_file}");
             let firmware = ota_file.payload().to_vec();
             let progress_bar = ProgressBar::new(firmware.frame_count() as u64);
+            progress_bar.println(ota_file.to_string());
 
             Tty::new(tty, BaudRate::RstCts, FlowControl::Software)
                 .fwupd(
