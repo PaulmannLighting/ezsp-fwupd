@@ -27,10 +27,15 @@ where
         match uart.init().await {
             Ok(response) => {
                 if let Some(progress_bar) = progress_bar {
-                    progress_bar.println(format!("Stack type: {:#04X}", response.stack_type()));
+                    progress_bar.println(format!(
+                        "EZSP version:  {:#04X}",
+                        response.protocol_version()
+                    ));
+                    progress_bar.println(format!("Stack type:    {:#04X}", response.stack_type()));
                     progress_bar.println(format!("Stack version: {}", response.stack_version()));
                 } else {
-                    info!("Stack type: {:#04X}", response.stack_type());
+                    info!("EZSP version:  {:#04X}", response.protocol_version());
+                    info!("Stack type:    {:#04X}", response.stack_type());
                     info!("Stack version: {}", response.stack_version());
                 }
             }

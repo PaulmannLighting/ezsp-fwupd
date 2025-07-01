@@ -12,7 +12,7 @@ use ezsp::{Callback, Ezsp};
 use fwupd::{FrameCount, Fwupd, Reset, Tty};
 use indicatif::{ProgressBar, ProgressStyle};
 use le_stream::FromLeStream;
-use log::error;
+use log::{error, info};
 use serialport::FlowControl;
 use tokio::sync::mpsc::channel;
 
@@ -124,8 +124,9 @@ async fn main() {
 
             match uart.init().await {
                 Ok(response) => {
-                    println!("Stack type: {:#04X}", response.stack_type());
-                    println!("Stack version: {}", response.stack_version());
+                    info!("EZSP version:  {:#04X}", response.protocol_version());
+                    info!("Stack type:    {:#04X}", response.stack_type());
+                    info!("Stack version: {}", response.stack_version());
                 }
                 Err(error) => {
                     error!("Failed to get version info: {error}");
