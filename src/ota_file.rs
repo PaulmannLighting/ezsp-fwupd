@@ -74,7 +74,7 @@ impl Display for OtaFile {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "OtaFile {{ magic: {:#04X}, header: {}, security_credentials: {}, upgrade_file_destination: {}, hardware_versions: {:?}, tags: [{}], payload: {:#04X?} }}",
+            "OtaFile {{ magic: {:#04X}, header: {}, security_credentials: {}, upgrade_file_destination: {}, hardware_versions: {:?}, tags: [{}], payload_length: {} }}",
             HexSlice::new(self.magic()),
             self.header(),
             self.security_credentials().map_or_else(
@@ -91,7 +91,7 @@ impl Display for OtaFile {
                 .map(ToString::to_string)
                 .collect::<Vec<_>>()
                 .join(", "),
-            self.payload()
+            self.payload.len()
         )
     }
 }
