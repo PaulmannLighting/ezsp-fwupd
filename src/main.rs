@@ -8,7 +8,7 @@ use ashv2::{BaudRate, HexSlice};
 use clap::{Parser, Subcommand};
 use indicatif::ProgressBar;
 use le_stream::FromLeStream;
-use log::error;
+use log::{error, info};
 use serialport::FlowControl;
 
 use crate::ota_file::OtaFile;
@@ -22,8 +22,6 @@ mod xmodem;
 
 #[derive(Debug, Parser)]
 struct Args {
-    #[clap(index = 1, help = "the serial port to use for firmware update")]
-    tty: String,
     #[clap(subcommand)]
     action: Action,
 }
@@ -31,11 +29,15 @@ struct Args {
 #[derive(Debug, Subcommand)]
 enum Action {
     Reset {
+        #[clap(index = 1, help = "the serial port to use for firmware update")]
+        tty: String,
         #[clap(long, short, help = "serial port timeout in milliseconds")]
         timeout: Option<u64>,
     },
     Update {
-        #[clap(index = 1, help = "the firmware file to upload")]
+        #[clap(index = 1, help = "the serial port to use for firmware update")]
+        tty: String,
+        #[clap(index = 2, help = "the firmware file to upload")]
         firmware: PathBuf,
         #[clap(long, short, help = "serial port timeout in milliseconds")]
         timeout: Option<u64>,
@@ -60,8 +62,8 @@ async fn main() {
     let args = Args::parse();
 
     match args.action {
-        Action::Reset { timeout } => {
-            Tty::new(args.tty, BaudRate::RstCts, FlowControl::Software)
+        Action::Reset { tty, timeout } => {
+            Tty::new(tty, BaudRate::RstCts, FlowControl::Software)
                 .open()
                 .unwrap_or_else(|err| {
                     error!("Failed to open serial port: {err}");
@@ -74,16 +76,22 @@ async fn main() {
                 });
         }
         Action::Update {
+            tty,
             firmware,
             timeout,
             offset,
             no_prepare,
         } => {
-            let firmware: Vec<u8> =
-                read(firmware).expect("Failed to read firmware file")[offset..].to_vec();
+            let firmware: Vec<u8> = read(firmware).expect("Failed to read firmware file");
+            let ota_file = OtaFile::from_le_stream_exact(firmware.into_iter())
+                .expect("Failed to read ota file")
+                .validate()
+                .expect("Failed to validate ota file");
+            info!("{ota_file}");
+            let firmware = ota_file.payload().to_vec();
             let progress_bar = ProgressBar::new(firmware.frame_count() as u64);
 
-            Tty::new(args.tty, BaudRate::RstCts, FlowControl::Software)
+            Tty::new(tty, BaudRate::RstCts, FlowControl::Software)
                 .fwupd(
                     firmware,
                     timeout.map(Duration::from_millis),
@@ -98,8 +106,6 @@ async fn main() {
         }
         Action::Ota { firmware } => {
             let firmware: Vec<u8> = read(firmware).expect("Failed to read firmware file");
-            println!("Length of file: {}", firmware.len());
-            println!("First 70 bytes: {:#04X}", HexSlice::new(&firmware[..70]));
             let ota_file = OtaFile::from_le_stream_exact(firmware.into_iter())
                 .expect("Failed to read ota file")
                 .validate()

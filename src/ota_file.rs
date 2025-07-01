@@ -1,7 +1,8 @@
+use ashv2::HexSlice;
 use ezsp::ember::Eui64;
-use le_stream::FromLeStream;
-
 use header::Header;
+use le_stream::FromLeStream;
+use std::fmt::Display;
 use tag::Tag;
 use upgrade_file_destination::UpgradeFileDestination;
 
@@ -66,6 +67,28 @@ impl OtaFile {
         } else {
             Err(self.magic)
         }
+    }
+}
+
+impl Display for OtaFile {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "OtaFile {{ magic: {:#04X}, header: {}, security_credentials: {}, upgrade_file_destination: {}, hardware_versions: {:?}, tags: {:?}, payload: {:#04X?} }}",
+            HexSlice::new(self.magic()),
+            self.header(),
+            self.security_credentials().map_or_else(
+                || "-".to_string(),
+                |security_credentials| format!("{security_credentials:#04X}")
+            ),
+            self.upgrade_file_destination().map_or_else(
+                || "-".to_string(),
+                |upgrade_file_destination| format!("{upgrade_file_destination}")
+            ),
+            self.hardware_versions(),
+            self.tags(),
+            self.payload()
+        )
     }
 }
 

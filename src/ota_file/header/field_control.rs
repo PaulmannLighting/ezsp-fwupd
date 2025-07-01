@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use bitflags::bitflags;
 use le_stream::derive::FromLeStream;
 
@@ -26,5 +28,25 @@ impl FieldControl {
     #[must_use]
     pub fn has_hardware_version(&self) -> bool {
         self.contains(Self::HARDWARE_VERSIONS_PRESENT_MASK)
+    }
+}
+
+impl Display for FieldControl {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut flags = Vec::new();
+
+        if self.has_security_credentials() {
+            flags.push("Security Credentials");
+        }
+
+        if self.has_upgrade_file_destination() {
+            flags.push("Upgrade File Destination");
+        }
+
+        if self.has_hardware_version() {
+            flags.push("Hardware Versions");
+        }
+
+        write!(f, "FieldControl({})", flags.join(", "))
     }
 }
