@@ -1,7 +1,7 @@
 use std::io::{ErrorKind, Read, Write};
 
 use ashv2::HexSlice;
-use log::{debug, trace};
+use log::{debug, error, trace};
 
 use crate::ignore_timeout::IgnoreTimeout;
 use crate::xmodem::frame::{ACK, Frame, NAK};
@@ -21,10 +21,8 @@ pub trait SendFrame: Read + Write {
                 Ok(()) => return Ok(()),
                 Err(error) => {
                     if ctr >= MAX_RETRIES {
-                        return Err(std::io::Error::new(
-                            ErrorKind::TimedOut,
-                            "Maximum retries exceeded",
-                        ));
+                        error!("max retries exceeded for frame #{index}");
+                        return Err(error);
                     }
 
                     debug!("Attempt {ctr} failed: {error}, retrying...");
