@@ -2,13 +2,14 @@ use crc::{CRC_16_XMODEM, Crc};
 
 const ONES_COMPLEMENT: u8 = 0xFF;
 const SOH: u8 = 0x01;
+const PAYLOAD_OFFSET: usize = 3;
 pub const EOT: u8 = 0x04;
 pub const ACK: u8 = 0x06;
 pub const NAK: u8 = 0x15;
 pub const PAYLOAD_SIZE: usize = 128;
 pub const PACKET_SIZE: usize = PAYLOAD_SIZE + 5;
 pub type Payload = [u8; PAYLOAD_SIZE];
-pub type PacketBytes = heapless::Vec<u8, PACKET_SIZE>;
+pub type PacketBytes = [u8; PACKET_SIZE];
 
 const CRC: Crc<u16> = Crc::<u16>::new(&CRC_16_XMODEM);
 
@@ -36,13 +37,13 @@ impl Frame {
 
     /// Returns the bytes of the packet.
     pub fn into_bytes(self) -> PacketBytes {
-        let mut vec = PacketBytes::new();
-        vec.push(self.soh).expect("Buffer overflow. This is a bug.");
-        vec.push(self.blk).expect("Buffer overflow. This is a bug.");
-        vec.push(self.cmp).expect("Buffer overflow. This is a bug.");
-        vec.extend(self.data);
-        vec.extend(self.chk.to_be_bytes());
-        vec
+        let mut result = [0; PACKET_SIZE];
+        result[0] = self.soh;
+        result[1] = self.blk;
+        result[2] = self.cmp;
+        result[PAYLOAD_OFFSET..PAYLOAD_SIZE + PAYLOAD_OFFSET].copy_from_slice(&self.data);
+        result[PACKET_SIZE - 2..PACKET_SIZE].copy_from_slice(&self.chk.to_le_bytes());
+        result
     }
 }
 
