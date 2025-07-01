@@ -1,8 +1,10 @@
-# zb-fwupd
-A Zigbee Firmware updater.
+# ezsp-fwupd
 
-The zigbee firmware updater's purpose is to provide a client-side service to the smik gateway to
+A Firmware updater for [`EZSP`](https://github.com/PaulmannLighting/ezsp)-based Zigbee WNICs.
 
-1. Check for available firmware updates available on the local system  
-   a. Which are provided within a specialized folder via Mender update images.
-2. Install appropriate updates for the Zigbee chip's firmware on the local system.
+This library provides a simple interface to update the firmware of devices that use the EZSP protocol.
+
+## In development
+
+This library is currently under heavy development and is not yet ready for production use. The API may change
+frequently, and there may be bugs and missing features.
