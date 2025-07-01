@@ -1,6 +1,8 @@
+use field_control::FieldControl;
+use le_stream::FromLeStream;
 use le_stream::derive::FromLeStream;
 
-use field_control::FieldControl;
+use super::tag::Tag;
 
 const HEADER_STRING_LENGTH: usize = 32;
 
@@ -63,5 +65,25 @@ impl Header {
     #[must_use]
     pub const fn image_size(&self) -> u32 {
         self.image_size
+    }
+
+    #[must_use]
+    pub fn tags<T>(&self, mut bytes: T) -> Vec<Tag>
+    where
+        T: Iterator<Item = u8>,
+    {
+        let mut tags = Vec::new();
+        let mut limit = self.image_size() - u32::from(self.length());
+
+        while limit > 0 {
+            if let Some(tag) = Tag::from_le_stream(&mut bytes) {
+                limit = limit.saturating_sub(tag.length()).saturating_sub(Tag::SIZE);
+                tags.push(tag);
+            } else {
+                return tags;
+            }
+        }
+
+        tags
     }
 }

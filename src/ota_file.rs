@@ -2,18 +2,15 @@ use ezsp::ember::Eui64;
 use le_stream::FromLeStream;
 
 use header::Header;
+use tag::Tag;
 use upgrade_file_destination::UpgradeFileDestination;
 
 const MAGIC: [u8; 4] = [0x1E, 0xF1, 0xEE, 0x0B];
 const HEADER_VERSION_ZIGBEE: u16 = 0x0100;
 const HEADER_VERSION_THREAD: u16 = 0x0200;
-const SECURITY_CREDENTIAL_VERSION_FIELD_PRESENT_MASK: u16 = 0x0001;
-const DEVICE_SPECIFIC_FILE_PRESENT_MASK: u16 = 0x0002;
-const HARDWARE_VERSIONS_PRESENT_MASK: u16 = 0x0004;
-const EUI64_SIZE: usize = 8;
-const UID_SIZE: usize = 32;
 
 mod header;
+mod tag;
 mod upgrade_file_destination;
 
 #[derive(Debug)]
@@ -23,6 +20,7 @@ pub struct OtaFile {
     security_credentials: Option<u8>,
     upgrade_file_destination: Option<UpgradeFileDestination>,
     hardware_versions: Option<(u16, u16)>,
+    tags: Vec<Tag>,
     payload: Vec<u8>,
 }
 
@@ -43,13 +41,18 @@ impl OtaFile {
     }
 
     #[must_use]
-    pub fn upgrade_file_destination(&self) -> Option<&UpgradeFileDestination> {
+    pub const fn upgrade_file_destination(&self) -> Option<&UpgradeFileDestination> {
         self.upgrade_file_destination.as_ref()
     }
 
     #[must_use]
     pub const fn hardware_versions(&self) -> Option<(u16, u16)> {
         self.hardware_versions
+    }
+
+    #[must_use]
+    pub fn tags(&self) -> &[Tag] {
+        &self.tags
     }
 
     #[must_use]
@@ -104,6 +107,7 @@ impl FromLeStream for OtaFile {
             None
         };
 
+        let tags = header.tags(&mut bytes);
         let payload = bytes.collect::<Vec<_>>();
 
         Some(Self {
@@ -112,6 +116,7 @@ impl FromLeStream for OtaFile {
             security_credentials,
             upgrade_file_destination,
             hardware_versions,
+            tags,
             payload,
         })
     }
