@@ -12,7 +12,7 @@ use ezsp::{Callback, Ezsp};
 use fwupd::{FrameCount, Fwupd, Reset, Tty};
 use indicatif::{ProgressBar, ProgressStyle};
 use le_stream::FromLeStream;
-use log::{error, info};
+use log::error;
 use serialport::FlowControl;
 use tokio::sync::mpsc::channel;
 
