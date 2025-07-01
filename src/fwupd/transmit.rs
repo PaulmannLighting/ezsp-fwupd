@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use ashv2::HexSlice;
 use indicatif::ProgressBar;
-use log::debug;
+use log::{debug, trace};
 use serialport::SerialPort;
 
 use crate::fwupd::xmodem::Send;
@@ -33,27 +33,22 @@ where
     T: SerialPort,
 {
     fn init_stage1(&mut self) -> std::io::Result<()> {
+        debug!("Firmware update stage 1 initialization...");
         self.write_all(INIT_STAGE1)?;
         let mut response = Vec::new();
-        debug!("Waiting for initial response...");
+        debug!("Waiting for response...");
         self.read_to_end(&mut response).ignore_timeout()?;
-        debug!(
-            "Received initial response: {:#04X}",
-            HexSlice::new(&response)
-        );
+        trace!("Received response: {:#04X}", HexSlice::new(&response));
         Ok(())
     }
 
     fn init_stage2(&mut self) -> std::io::Result<()> {
-        debug!("Sending start signal...");
+        debug!("Firmware update stage 2 initialization...");
         self.write_all(INIT_STAGE2)?;
         let mut response = Vec::new();
-        debug!("Waiting for initial response...");
+        debug!("Waiting for response...");
         self.read_to_end(&mut response).ignore_timeout()?;
-        debug!(
-            "Received second response: {:#04X}",
-            HexSlice::new(&response)
-        );
+        trace!("Received response: {:#04X}", HexSlice::new(&response));
         Ok(())
     }
 
