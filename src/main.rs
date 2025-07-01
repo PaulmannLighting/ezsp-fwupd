@@ -4,7 +4,7 @@ use std::fs::read;
 use std::path::PathBuf;
 use std::time::Duration;
 
-use ashv2::BaudRate;
+use ashv2::{BaudRate, HexSlice};
 use clap::{Parser, Subcommand};
 use indicatif::ProgressBar;
 use le_stream::FromLeStream;
@@ -98,21 +98,13 @@ async fn main() {
         }
         Action::Ota { firmware } => {
             let firmware: Vec<u8> = read(firmware).expect("Failed to read firmware file");
-            println!(
-                "Raw first 66 bytes: {:#04X}",
-                ashv2::HexSlice::new(&firmware[..66])
-            );
+            println!("Length of file: {}", firmware.len());
+            println!("First 70 bytes: {:#04X}", HexSlice::new(&firmware[..70]));
             let ota_file = OtaFile::from_le_stream_exact(firmware.into_iter())
-                .expect("Failed to read ota file");
-            let header = ota_file.header();
-            println!("OTA header: {header:?}");
-            println!("OTA footer: {:?}", ota_file.footer());
-            println!("Header string: {}", header.header_string());
-            println!(
-                "Size: {} / {}",
-                header.image_size(),
-                ota_file.payload().len()
-            );
+                .expect("Failed to read ota file")
+                .validate()
+                .expect("Failed to validate ota file");
+            println!("OTA file: {ota_file:#04X?}");
         }
     }
 }

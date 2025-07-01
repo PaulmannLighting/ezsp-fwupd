@@ -333,6 +333,7 @@ name = "ezsp-fwupd"
 version = "0.1.0"
 dependencies = [
  "ashv2 0.2.1",
+ "bitflags 2.9.1",
  "clap",
  "crc",
  "env_logger",

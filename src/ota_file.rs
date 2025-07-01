@@ -1,29 +1,68 @@
+use ezsp::ember::Eui64;
 use le_stream::FromLeStream;
-use le_stream::derive::FromLeStream;
 
-const EMBER_AF_OTA_MAX_HEADER_STRING_LENGTH: usize = 32;
+use header::Header;
+use upgrade_file_destination::UpgradeFileDestination;
+
+const MAGIC: [u8; 4] = [0x1E, 0xF1, 0xEE, 0x0B];
+const HEADER_VERSION_ZIGBEE: u16 = 0x0100;
+const HEADER_VERSION_THREAD: u16 = 0x0200;
+const SECURITY_CREDENTIAL_VERSION_FIELD_PRESENT_MASK: u16 = 0x0001;
+const DEVICE_SPECIFIC_FILE_PRESENT_MASK: u16 = 0x0002;
+const HARDWARE_VERSIONS_PRESENT_MASK: u16 = 0x0004;
+const EUI64_SIZE: usize = 8;
+const UID_SIZE: usize = 32;
+
+mod header;
+mod upgrade_file_destination;
 
 #[derive(Debug)]
 pub struct OtaFile {
-    header: OtaHeader,
-    footer: Option<Footer>,
+    magic: [u8; 4],
+    header: Header,
+    security_credentials: Option<u8>,
+    upgrade_file_destination: Option<UpgradeFileDestination>,
+    hardware_versions: Option<(u16, u16)>,
     payload: Vec<u8>,
 }
 
 impl OtaFile {
     #[must_use]
-    pub const fn header(&self) -> &OtaHeader {
+    pub const fn magic(&self) -> &[u8; 4] {
+        &self.magic
+    }
+
+    #[must_use]
+    pub const fn header(&self) -> &Header {
         &self.header
     }
 
     #[must_use]
-    pub const fn footer(&self) -> Option<&Footer> {
-        self.footer.as_ref()
+    pub const fn security_credentials(&self) -> Option<u8> {
+        self.security_credentials
+    }
+
+    #[must_use]
+    pub fn upgrade_file_destination(&self) -> Option<&UpgradeFileDestination> {
+        self.upgrade_file_destination.as_ref()
+    }
+
+    #[must_use]
+    pub const fn hardware_versions(&self) -> Option<(u16, u16)> {
+        self.hardware_versions
     }
 
     #[must_use]
     pub fn payload(&self) -> &[u8] {
         &self.payload
+    }
+
+    pub fn validate(self) -> Result<Self, [u8; 4]> {
+        if self.magic == MAGIC {
+            Ok(self)
+        } else {
+            Err(self.magic)
+        }
     }
 }
 
@@ -32,46 +71,48 @@ impl FromLeStream for OtaFile {
     where
         T: Iterator<Item = u8>,
     {
-        let header = OtaHeader::from_le_stream(&mut bytes)?;
-        let footer = Footer::from_le_stream(&mut bytes)?;
+        let magic = <[u8; 4]>::from_le_stream(&mut bytes)?;
+        let header = Header::from_le_stream(&mut bytes)?;
+        let field_control = header.field_control();
+
+        let security_credentials = if field_control.has_security_credentials() {
+            Some(u8::from_le_stream(&mut bytes)?)
+        } else {
+            None
+        };
+
+        let upgrade_file_destination = if field_control.has_upgrade_file_destination() {
+            match header.version() {
+                HEADER_VERSION_ZIGBEE => Some(UpgradeFileDestination::Zigbee(
+                    Eui64::from_le_stream(&mut bytes)?,
+                )),
+                HEADER_VERSION_THREAD => Some(UpgradeFileDestination::Thread(
+                    <[u8; 32]>::from_le_stream(&mut bytes)?,
+                )),
+                _ => None,
+            }
+        } else {
+            None
+        };
+
+        let hardware_versions = if field_control.has_hardware_version() {
+            Some((
+                u16::from_le_stream(&mut bytes)?,
+                u16::from_le_stream(&mut bytes)?,
+            ))
+        } else {
+            None
+        };
+
         let payload = bytes.collect::<Vec<_>>();
+
         Some(Self {
+            magic,
             header,
-            footer: Some(footer),
+            security_credentials,
+            upgrade_file_destination,
+            hardware_versions,
             payload,
         })
     }
-}
-
-#[derive(Debug, FromLeStream)]
-pub struct OtaHeader {
-    version: u16,
-    length: u16,
-    field_control: u16,
-    manufacturer_id: u16,
-    image_type: u16,
-    firmware_version: u32,
-    zigbee_stack_version: u16,
-    header_string: [u8; EMBER_AF_OTA_MAX_HEADER_STRING_LENGTH + 1],
-    image_size: u32,
-}
-
-impl OtaHeader {
-    #[must_use]
-    pub fn header_string(&self) -> String {
-        String::from_utf8_lossy(&self.header_string).to_string()
-    }
-
-    #[must_use]
-    pub const fn image_size(&self) -> u32 {
-        self.image_size
-    }
-}
-
-#[derive(Debug, FromLeStream)]
-pub struct Footer {
-    security_credentials: u8,
-    upgrade_file_destination: [u8; 8],
-    minimum_hardware_version: u16,
-    maximum_hardware_version: u16,
 }
