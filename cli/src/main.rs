@@ -52,6 +52,8 @@ enum Action {
     Ota {
         #[clap(index = 1, help = "the firmware file to upload")]
         firmware: PathBuf,
+        #[clap(long, short, help = "enable debug output")]
+        debug: bool,
     },
 }
 
@@ -134,13 +136,18 @@ async fn main() {
                 }
             }
         }
-        Action::Ota { firmware } => {
+        Action::Ota { firmware, debug } => {
             let firmware: Vec<u8> = read(firmware).expect("Failed to read firmware file");
             let ota_file = OtaFile::from_le_stream_exact(firmware.into_iter())
                 .expect("Failed to read ota file")
                 .validate()
                 .expect("Failed to validate ota file");
-            println!("{ota_file}");
+
+            if debug {
+                println!("Ota file:\n{ota_file:#04X?}");
+            } else {
+                println!("{ota_file}");
+            }
         }
     }
 }
