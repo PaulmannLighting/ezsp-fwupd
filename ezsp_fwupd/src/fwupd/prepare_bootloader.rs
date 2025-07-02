@@ -32,7 +32,9 @@ where
         debug!("Getting bootloader version...");
         match uart.get_ember_version().await {
             Ok(response) => match response {
-                Ok(ember_version) => progress_bar.println(ember_version.to_string()),
+                Ok(ember_version) => {
+                    progress_bar.println(format!("Current version: {ember_version}"));
+                }
                 Err(error) => {
                     error!("Failed to parse version info: {error}");
                 }
