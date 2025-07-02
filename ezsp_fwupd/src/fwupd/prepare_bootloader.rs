@@ -31,6 +31,8 @@ where
         match uart.init().await {
             Ok(response) => {
                 if let Some(progress_bar) = progress_bar {
+                    progress_bar.println("");
+                    progress_bar.println("### Current firmware info ###");
                     progress_bar.println(format!(
                         "EZSP version:  {:#04X}",
                         response.protocol_version()

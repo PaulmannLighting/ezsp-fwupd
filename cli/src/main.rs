@@ -77,6 +77,7 @@ async fn main() {
                 .unwrap()
                 .progress_chars("##-"),
             );
+            progress_bar.println("### Firmware update info ###");
             progress_bar.println(ota_file.to_string());
 
             Tty::new(tty, BaudRate::RstCts, FlowControl::Software)
