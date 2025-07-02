@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use field_control::FieldControl;
 use le_stream::FromLeStream;
 use le_stream::derive::FromLeStream;
@@ -87,23 +85,5 @@ impl Header {
         }
 
         tags
-    }
-}
-
-impl Display for Header {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Header {{ version: {}, length: {}, field_control: {}, manufacturer_id: {}, image_type: {}, firmware_version: {}, zigbee_stack_version: {}, name: '{}', image_size: {} }}",
-            self.version(),
-            self.length(),
-            self.field_control(),
-            self.manufacturer_id(),
-            self.image_type(),
-            self.firmware_version(),
-            self.zigbee_stack_version(),
-            self.name(),
-            self.image_size()
-        )
     }
 }

@@ -1,5 +1,4 @@
 use le_stream::derive::FromLeStream;
-use std::fmt::Display;
 
 #[derive(Debug, FromLeStream)]
 pub struct Tag {
@@ -18,11 +17,5 @@ impl Tag {
     #[must_use]
     pub const fn length(&self) -> u32 {
         self.length
-    }
-}
-
-impl Display for Tag {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Tag(id: {}, length: {})", self.id(), self.length())
     }
 }
