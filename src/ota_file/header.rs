@@ -8,7 +8,7 @@ const HEADER_STRING_LENGTH: usize = 32;
 
 mod field_control;
 
-#[derive(Debug, FromLeStream)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, FromLeStream)]
 pub struct Header {
     version: u16,
     length: u16,

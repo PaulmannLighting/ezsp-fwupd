@@ -1,7 +1,7 @@
 use bitflags::bitflags;
 use le_stream::derive::FromLeStream;
 
-#[derive(Debug, FromLeStream)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, FromLeStream)]
 pub struct FieldControl(u16);
 
 bitflags! {

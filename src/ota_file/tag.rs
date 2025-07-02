@@ -1,6 +1,6 @@
 use le_stream::derive::FromLeStream;
 
-#[derive(Debug, FromLeStream)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, FromLeStream)]
 pub struct Tag {
     id: u16,
     length: u32,

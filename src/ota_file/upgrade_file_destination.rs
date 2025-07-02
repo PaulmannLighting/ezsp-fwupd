@@ -3,7 +3,7 @@ use std::fmt::Display;
 use ashv2::HexSlice;
 use ezsp::ember::Eui64;
 
-#[derive(Debug)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum UpgradeFileDestination {
     Zigbee(Eui64),
     Thread(Box<[u8; 32]>),

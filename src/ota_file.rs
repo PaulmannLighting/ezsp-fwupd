@@ -13,7 +13,7 @@ mod header;
 mod tag;
 mod upgrade_file_destination;
 
-#[derive(Debug)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct OtaFile {
     magic: [u8; 4],
     header: Header,
