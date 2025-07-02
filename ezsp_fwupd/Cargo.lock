@@ -79,6 +79,20 @@ dependencies = [
 [[package]]
 name = "ashv2"
 version = "0.2.1"
+dependencies = [
+ "bitflags 2.9.1",
+ "crc",
+ "heapless",
+ "log",
+ "num-derive",
+ "num-traits",
+ "serialport",
+ "tokio",
+]
+
+[[package]]
+name = "ashv2"
+version = "0.2.1"
 source = "git+https://github.com/PaulmannLighting/ashv2.git#e18c6d9994e049c968395e8f58a76da0f5b2d836"
 dependencies = [
  "bitflags 2.9.1",
@@ -189,22 +203,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b94f61472cee1439c0b966b47e3aca9ae07e45d070759512cd390ea2bebc6675"
 
 [[package]]
-name = "cli"
-version = "0.1.0"
-dependencies = [
- "ashv2",
- "clap",
- "env_logger",
- "ezsp",
- "ezsp-fwupd",
- "indicatif",
- "le-stream",
- "log",
- "serialport",
- "tokio",
-]
-
-[[package]]
 name = "colorchoice"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -312,9 +310,8 @@ dependencies = [
 [[package]]
 name = "ezsp"
 version = "0.1.0"
-source = "git+https://github.com/PaulmannLighting/ezsp.git#f30a8adc6b3a1313a1e059569e71c629afa45341"
 dependencies = [
- "ashv2",
+ "ashv2 0.2.1 (git+https://github.com/PaulmannLighting/ashv2.git)",
  "bitflags 2.9.1",
  "enum-iterator",
  "futures",
@@ -335,9 +332,11 @@ dependencies = [
 name = "ezsp-fwupd"
 version = "0.1.0"
 dependencies = [
- "ashv2",
+ "ashv2 0.2.1",
  "bitflags 2.9.1",
+ "clap",
  "crc",
+ "env_logger",
  "ezsp",
  "indicatif",
  "le-stream",
