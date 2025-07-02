@@ -311,8 +311,8 @@ dependencies = [
 
 [[package]]
 name = "ezsp"
-version = "0.1.0"
-source = "git+https://github.com/PaulmannLighting/ezsp.git#322ddeb0d7b602ed15a270507b44f09ee7c5a6b5"
+version = "0.2.0"
+source = "git+https://github.com/PaulmannLighting/ezsp.git#05dd67f02ef2d945d614e16ee76dea6dc68ffab1"
 dependencies = [
  "ashv2",
  "bitflags 2.9.1",
@@ -551,9 +551,9 @@ dependencies = [
 
 [[package]]
 name = "le-stream"
-version = "0.5.0"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9392d5019beaff84f3f89b9c490dc864e7bbaeceb4facde46d9187989cf7e29a"
+checksum = "75d609a898cb3c73743539e69eeb08b0449ddd8457e5cbf99f729c3463276489"
 dependencies = [
  "heapless",
  "le-stream-derive",
@@ -830,7 +830,7 @@ dependencies = [
 [[package]]
 name = "silizium"
 version = "0.5.1"
-source = "git+https://github.com/PaulmannLighting/silizium.git#bcb5a97c3eb8c200fe448ae0413db3e29c2d3977"
+source = "git+https://github.com/PaulmannLighting/silizium.git#d11ffb28487806a4b1634c75d3ba3d9acd208710"
 dependencies = [
  "bitflags 2.9.1",
  "le-stream",

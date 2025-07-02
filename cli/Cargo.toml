@@ -7,13 +7,13 @@ edition = "2024"
 ashv2 = { version = "0.2", git = "https://github.com/PaulmannLighting/ashv2.git" }
 clap = { version = "4.5.40", features = ["derive"] }
 env_logger = "0.11.8"
-ezsp = { version = "0.1", git = "https://github.com/PaulmannLighting/ezsp.git" }
+ezsp = { version = "0.2", git = "https://github.com/PaulmannLighting/ezsp.git" }
 ezsp-fwupd = { path = "../ezsp_fwupd" }
 indicatif = "0.17"
-le-stream = { version = "0.5.0", features = ["derive"] }
+le-stream = { version = "1.2", features = ["derive"] }
 log = "0.4"
 serialport = "4.7"
-tokio = { version = "1.44", features = ["macros", "rt", "rt-multi-thread"] }
+tokio = { version = "1.46", features = ["macros", "rt", "rt-multi-thread"] }
 
 [[bin]]
 name = "ezsp-fwupd"
