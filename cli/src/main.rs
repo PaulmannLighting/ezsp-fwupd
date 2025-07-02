@@ -140,7 +140,7 @@ async fn main() {
                 .expect("Failed to read ota file")
                 .validate()
                 .expect("Failed to validate ota file");
-            println!("OTA file: {ota_file}");
+            println!("{ota_file}");
         }
     }
 }
