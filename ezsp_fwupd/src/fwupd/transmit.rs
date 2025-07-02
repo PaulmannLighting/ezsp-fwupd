@@ -1,11 +1,11 @@
 use std::time::Duration;
 
+use crate::FlashProgress;
+use crate::xmodem::Send;
 use ashv2::HexSlice;
 use indicatif::ProgressBar;
 use log::{debug, trace};
 use serialport::SerialPort;
-
-use crate::xmodem::Send;
 
 const INIT_STAGE1: &[u8] = &[0x0A];
 const INIT_STAGE1_RESPONSE_SIZE: usize = 69;
@@ -66,11 +66,7 @@ where
             debug!("Using default timeout");
         }
 
-        if let Some(progress_bar) = progress_bar {
-            progress_bar.set_message("Flashing firmware...");
-        }
-
-        debug!("Transmitting firmware...");
+        progress_bar.set_message("Flashing firmware...");
         let response = self.send(firmware, progress_bar)?;
         debug!("Firmware sent response: {:#04X}", HexSlice::new(&response));
 

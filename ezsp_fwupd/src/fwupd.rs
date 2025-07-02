@@ -8,7 +8,8 @@ pub use crate::xmodem::FrameCount;
 pub use reset::Reset;
 pub use tty::Tty;
 
-use crate::clear_buffer::ClearBuffer;
+use crate::ClearBuffer;
+use crate::FlashProgress;
 use prepare_bootloader::PrepareBootloader;
 use transmit::Transmit;
 
@@ -25,7 +26,7 @@ pub trait Fwupd {
         firmware: Vec<u8>,
         timeout: Option<Duration>,
         no_prepare: bool,
-        progress_bar: Option<ProgressBar>,
+        progress_bar: Option<&ProgressBar>,
     ) -> impl Future<Output = std::io::Result<()>>;
 }
 
@@ -35,13 +36,11 @@ impl Fwupd for Tty {
         firmware: Vec<u8>,
         timeout: Option<Duration>,
         no_prepare: bool,
-        progress_bar: Option<ProgressBar>,
+        progress_bar: Option<&ProgressBar>,
     ) -> std::io::Result<()> {
         if !no_prepare {
             info!("Preparing bootloader...");
-            self.open()?
-                .prepare_bootloader(progress_bar.as_ref())
-                .await?;
+            self.open()?.prepare_bootloader(progress_bar).await?;
         }
 
         let mut serial_port = self.open()?;
@@ -59,19 +58,13 @@ impl Fwupd for Tty {
         debug!("Initializing stage 2...");
         serial_port.init_stage2()?;
 
-        if let Err(error) =
-            serial_port.transmit(firmware, Some(original_timeout), progress_bar.as_ref())
-        {
+        if let Err(error) = serial_port.transmit(firmware, Some(original_timeout), progress_bar) {
             serial_port.reset(timeout)?;
             return Err(error);
         }
 
+        progress_bar.set_message("Firmware update complete, resetting device...");
         serial_port.reset(timeout)?;
-
-        if let Some(progress_bar) = progress_bar.as_ref() {
-            progress_bar.finish();
-        }
-
         Ok(())
     }
 }

@@ -1,8 +1,10 @@
 use ezsp::{Bootloader, Callback, Ezsp, uart::Uart};
 use indicatif::ProgressBar;
-use log::{debug, error, info};
+use log::{debug, error};
 use serialport::SerialPort;
 use tokio::sync::mpsc::channel;
+
+use crate::FlashProgress;
 
 const MODE: u8 = 0x00;
 
@@ -30,20 +32,14 @@ where
         debug!("Getting bootloader version...");
         match uart.init().await {
             Ok(response) => {
-                if let Some(progress_bar) = progress_bar {
-                    progress_bar.println("");
-                    progress_bar.println("### Current firmware info ###");
-                    progress_bar.println(format!(
-                        "EZSP version:  {:#04X}",
-                        response.protocol_version()
-                    ));
-                    progress_bar.println(format!("Stack type:    {:#04X}", response.stack_type()));
-                    progress_bar.println(format!("Stack version: {}", response.stack_version()));
-                } else {
-                    info!("EZSP version:  {:#04X}", response.protocol_version());
-                    info!("Stack type:    {:#04X}", response.stack_type());
-                    info!("Stack version: {}", response.stack_version());
-                }
+                progress_bar.println("");
+                progress_bar.println("### Current firmware info ###");
+                progress_bar.println(format!(
+                    "EZSP version:  {:#04X}",
+                    response.protocol_version()
+                ));
+                progress_bar.println(format!("Stack type:    {:#04X}", response.stack_type()));
+                progress_bar.println(format!("Stack version: {}", response.stack_version()));
             }
             Err(error) => {
                 error!("Failed to get version info: {error}");

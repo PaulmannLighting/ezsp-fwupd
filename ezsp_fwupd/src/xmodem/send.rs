@@ -3,7 +3,8 @@ use log::debug;
 
 use super::frame::EOT;
 use super::frames::Frames;
-use crate::ignore_timeout::IgnoreTimeout;
+use crate::FlashProgress;
+use crate::IgnoreTimeout;
 use send_frame::SendFrame;
 
 mod send_frame;
@@ -21,12 +22,10 @@ pub trait Send: SendFrame {
 
         for (index, frame) in Frames::new(data.into_iter()).enumerate() {
             self.send_frame(index, frame)?;
-
-            if let Some(progress_bar) = progress_bar {
-                progress_bar.inc(1);
-            }
+            progress_bar.increase();
         }
 
+        progress_bar.println("Transfer complete, sending EOT...");
         self.write_all(&[EOT])?;
         self.flush()?;
         let mut buffer = Vec::new();

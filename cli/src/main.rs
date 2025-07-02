@@ -80,18 +80,21 @@ async fn main() {
             progress_bar.println("### Firmware update info ###");
             progress_bar.println(ota_file.to_string());
 
-            Tty::new(tty, BaudRate::RstCts, FlowControl::Software)
+            let result = Tty::new(tty, BaudRate::RstCts, FlowControl::Software)
                 .fwupd(
                     firmware,
                     Some(Duration::from_millis(timeout)),
                     no_prepare,
-                    Some(progress_bar),
+                    Some(&progress_bar),
                 )
-                .await
-                .unwrap_or_else(|err| {
-                    error!("Firmware update failed: {err}");
-                    std::process::exit(1);
-                });
+                .await;
+
+            progress_bar.finish();
+
+            if let Err(error) = result {
+                error!("Firmware update failed: {error}");
+                std::process::exit(1);
+            };
         }
         Action::Reset { tty, timeout } => {
             Tty::new(tty, BaudRate::RstCts, FlowControl::Software)
