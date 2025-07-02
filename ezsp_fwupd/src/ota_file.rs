@@ -96,7 +96,7 @@ impl Display for OtaFile {
         writeln!(f, "Name:          {}", header.name())?;
         writeln!(f, "Type:          {}", header.image_type())?;
         writeln!(f, "Manufacturer:  {}", header.manufacturer_id())?;
-        writeln!(f, "Size:          {}", header.image_size())?;
+        write!(f, "Size:          {}", header.image_size())?;
         Ok(())
     }
 }
