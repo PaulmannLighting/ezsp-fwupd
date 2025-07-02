@@ -92,7 +92,7 @@ impl OtaFile {
 impl Display for OtaFile {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let header = self.header();
-        writeln!(f, "Version:       {}", header.version())?;
+        writeln!(f, "Version:       {}", header.firmware_version())?;
         writeln!(f, "Name:          {}", header.name())?;
         writeln!(f, "Type:          {}", header.image_type())?;
         writeln!(f, "Manufacturer:  {}", header.manufacturer_id())?;
