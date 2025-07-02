@@ -1,4 +1,3 @@
-use ashv2::HexSlice;
 use ezsp::ember::Eui64;
 use header::Header;
 use le_stream::FromLeStream;
