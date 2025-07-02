@@ -10,12 +10,12 @@ impl Tag {
     pub const SIZE: u32 = 2 + 4;
 
     #[must_use]
-    pub const fn id(&self) -> u16 {
+    pub const fn id(self) -> u16 {
         self.id
     }
 
     #[must_use]
-    pub const fn length(&self) -> u32 {
+    pub const fn length(self) -> u32 {
         self.length
     }
 }

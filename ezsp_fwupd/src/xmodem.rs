@@ -1,3 +1,5 @@
+//! XMODEM protocol implementation for EZSP firmware updates.
+
 pub use frame_count::FrameCount;
 pub use send::Send;
 

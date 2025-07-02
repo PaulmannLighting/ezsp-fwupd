@@ -8,6 +8,7 @@ const HEADER_STRING_LENGTH: usize = 32;
 
 mod field_control;
 
+/// Represents the header of an OTA (Over-The-Air) file used for firmware updates.
 #[derive(Clone, Debug, Eq, Hash, PartialEq, FromLeStream)]
 pub struct Header {
     version: u16,
@@ -22,51 +23,61 @@ pub struct Header {
 }
 
 impl Header {
+    /// Return the version.
     #[must_use]
     pub const fn version(&self) -> u16 {
         self.version
     }
 
+    /// Return the header's length.
     #[must_use]
     pub const fn length(&self) -> u16 {
         self.length
     }
 
+    /// Return the field control flags.
     #[must_use]
     pub const fn field_control(&self) -> &FieldControl {
         &self.field_control
     }
 
+    /// Return the manufacturer ID.
     #[must_use]
     pub const fn manufacturer_id(&self) -> u16 {
         self.manufacturer_id
     }
 
+    /// Return the image type.
     #[must_use]
     pub const fn image_type(&self) -> u16 {
         self.image_type
     }
 
+    /// Return the firmware version.
     #[must_use]
     pub const fn firmware_version(&self) -> u32 {
         self.firmware_version
     }
 
+    /// Return the Zigbee stack version.
     #[must_use]
     pub const fn zigbee_stack_version(&self) -> u16 {
         self.zigbee_stack_version
     }
 
+    /// Return the name of the OTA file.
     #[must_use]
     pub fn name(&self) -> String {
         String::from_utf8_lossy(&self.name).to_string()
     }
 
+    /// Return the size of the image.
     #[must_use]
     pub const fn image_size(&self) -> u32 {
         self.image_size
     }
 
+    /// Parse the tags from the OTA file.
     #[must_use]
     pub fn tags<T>(&self, mut bytes: T) -> Vec<Tag>
     where

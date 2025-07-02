@@ -1,7 +1,8 @@
+use std::fmt::Display;
+
 use ezsp::ember::Eui64;
 use header::Header;
 use le_stream::FromLeStream;
-use std::fmt::Display;
 use tag::Tag;
 use upgrade_file_destination::UpgradeFileDestination;
 
@@ -13,6 +14,7 @@ mod header;
 mod tag;
 mod upgrade_file_destination;
 
+/// Represents an OTA (Over-The-Air) file used for firmware updates.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct OtaFile {
     magic: [u8; 4],
@@ -25,41 +27,59 @@ pub struct OtaFile {
 }
 
 impl OtaFile {
+    /// Return the OTA file's header magic.
     #[must_use]
     pub const fn magic(&self) -> &[u8; 4] {
         &self.magic
     }
 
+    /// Return the OTA file's header.
     #[must_use]
     pub const fn header(&self) -> &Header {
         &self.header
     }
 
+    /// Return the OTA file's security credentials, if present.
     #[must_use]
     pub const fn security_credentials(&self) -> Option<u8> {
         self.security_credentials
     }
 
+    /// Return the OTA file's upgrade file destination, if present.
     #[must_use]
     pub const fn upgrade_file_destination(&self) -> Option<&UpgradeFileDestination> {
         self.upgrade_file_destination.as_ref()
     }
 
+    /// Return the OTA file's hardware versions, if present.
+    ///
+    /// The first value is the minimum hardware version, and the second value is the maximum hardware version.
     #[must_use]
     pub const fn hardware_versions(&self) -> Option<(u16, u16)> {
         self.hardware_versions
     }
 
+    /// Return the OTA file's tags.
     #[must_use]
     pub fn tags(&self) -> &[Tag] {
         &self.tags
     }
 
+    /// Return the OTA file's payload.
     #[must_use]
     pub fn payload(&self) -> &[u8] {
         &self.payload
     }
 
+    /// Validate the OTA file's magic number.
+    ///
+    /// # Returns
+    ///
+    /// If the magic number matches, returns `Ok(Self)`.
+    ///
+    /// # Errors
+    ///
+    /// If the magic number does not match, returns `Err([u8; 4])` with the faulty magic number.
     pub fn validate(self) -> Result<Self, [u8; 4]> {
         if self.magic == MAGIC {
             Ok(self)

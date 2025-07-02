@@ -17,7 +17,9 @@ mod reset;
 mod transmit;
 mod tty;
 
+/// Trait for firmware update operations using the `Tty` serial port.
 pub trait Fwupd {
+    /// Performs a firmware update operation.
     fn fwupd(
         &self,
         firmware: Vec<u8>,

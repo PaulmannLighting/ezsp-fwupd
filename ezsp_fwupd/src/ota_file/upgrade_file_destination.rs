@@ -3,9 +3,12 @@ use std::fmt::Display;
 use ashv2::HexSlice;
 use ezsp::ember::Eui64;
 
+/// Represents the destination for an OTA (Over-The-Air) upgrade file.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum UpgradeFileDestination {
+    /// Destination for a Zigbee device, identified by its EUI-64 address.
     Zigbee(Eui64),
+    /// Destination for a Thread device, identified by its Thread ID.
     Thread(Box<[u8; 32]>),
 }
 

@@ -1,5 +1,6 @@
 use super::frame::PAYLOAD_SIZE;
 
+/// Trait for counting the number of frames in an XMODEM transfer.
 pub trait FrameCount {
     /// Returns the number of frames in the XMODEM transfer.
     fn frame_count(&self) -> usize;

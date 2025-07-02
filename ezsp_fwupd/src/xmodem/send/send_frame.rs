@@ -9,6 +9,7 @@ use crate::xmodem::send::MAX_RETRIES;
 
 /// Sealed trait for sending XMODEM frames.
 pub trait SendFrame: Read + Write {
+    /// Sends a single frame with retries.
     fn send_frame(&mut self, index: usize, frame: Frame) -> std::io::Result<()> {
         debug!("Sending frame #{index}...");
 
@@ -33,6 +34,15 @@ pub trait SendFrame: Read + Write {
         }
     }
 
+    /// Attempts to send a frame and waits for an acknowledgment.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` on success, or an error if a NAK or unexpected response is received.
+    ///
+    /// # Errors
+    ///
+    /// If a NAK is received, it returns an error prompting a retransmission.
     fn try_send_frame(&mut self, frame: &[u8]) -> std::io::Result<()> {
         self.write_all(frame)?;
         self.flush()?;

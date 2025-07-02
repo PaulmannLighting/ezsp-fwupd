@@ -10,6 +10,7 @@ mod send_frame;
 
 const MAX_RETRIES: usize = 10;
 
+/// Trait for sending data using the XMODEM protocol.
 pub trait Send: SendFrame {
     /// Sends a file using the XMODEM protocol.
     fn send<T>(&mut self, data: T, progress_bar: Option<&ProgressBar>) -> std::io::Result<Box<[u8]>>
