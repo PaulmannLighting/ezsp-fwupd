@@ -7,7 +7,7 @@ use std::time::Duration;
 use ashv2::BaudRate;
 use clap::{Parser, Subcommand};
 use ezsp::uart::Uart;
-use ezsp::{Callback, Ezsp};
+use ezsp::{Callback, GetValueExt};
 use ezsp_fwupd::{FrameCount, Fwupd, OtaFile, Reset, Tty};
 use indicatif::{ProgressBar, ProgressStyle};
 use le_stream::FromLeStream;
@@ -125,12 +125,15 @@ async fn main() {
             let (callbacks_tx, _callbacks_rx) = channel::<Callback>(8);
             let mut uart = Uart::new(tty, callbacks_tx, 8, 8);
 
-            match uart.init().await {
-                Ok(response) => {
-                    println!("EZSP version:  {:#04X}", response.protocol_version());
-                    println!("Stack type:    {:#04X}", response.stack_type());
-                    println!("Stack version: {}", response.stack_version());
-                }
+            match uart.get_ember_version().await {
+                Ok(result) => match result {
+                    Ok(version_info) => {
+                        println!("{version_info}")
+                    }
+                    Err(error) => {
+                        error!("Failed to parse version info: {error}");
+                    }
+                },
                 Err(error) => {
                     error!("Failed to get version info: {error}");
                 }

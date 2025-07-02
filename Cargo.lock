@@ -312,7 +312,7 @@ dependencies = [
 [[package]]
 name = "ezsp"
 version = "0.1.0"
-source = "git+https://github.com/PaulmannLighting/ezsp.git#f30a8adc6b3a1313a1e059569e71c629afa45341"
+source = "git+https://github.com/PaulmannLighting/ezsp.git#322ddeb0d7b602ed15a270507b44f09ee7c5a6b5"
 dependencies = [
  "ashv2",
  "bitflags 2.9.1",

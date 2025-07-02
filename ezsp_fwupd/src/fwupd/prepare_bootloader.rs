@@ -1,4 +1,4 @@
-use ezsp::{Bootloader, Callback, Ezsp, uart::Uart};
+use ezsp::{Bootloader, Callback, GetValueExt, uart::Uart};
 use indicatif::ProgressBar;
 use log::{debug, error};
 use serialport::SerialPort;
@@ -30,17 +30,13 @@ where
         let mut uart = Uart::new(self, callbacks_tx, 8, 8);
 
         debug!("Getting bootloader version...");
-        match uart.init().await {
-            Ok(response) => {
-                progress_bar.println("");
-                progress_bar.println("### Current firmware info ###");
-                progress_bar.println(format!(
-                    "EZSP version:  {:#04X}",
-                    response.protocol_version()
-                ));
-                progress_bar.println(format!("Stack type:    {:#04X}", response.stack_type()));
-                progress_bar.println(format!("Stack version: {}", response.stack_version()));
-            }
+        match uart.get_ember_version().await {
+            Ok(response) => match response {
+                Ok(ember_version) => progress_bar.println(ember_version.to_string()),
+                Err(error) => {
+                    error!("Failed to parse version info: {error}");
+                }
+            },
             Err(error) => {
                 error!("Failed to get version info: {error}");
             }
