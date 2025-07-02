@@ -11,6 +11,10 @@ const RESET: &[u8] = &[0x0A, 0x32];
 /// Trait for resetting a device after a firmware update.
 pub trait Reset {
     /// Reset the device and finalize the firmware update process.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`std::io::Error`] if the reset operation fails.
     fn reset(&mut self, timeout: Option<Duration>) -> std::io::Result<()>;
 }
 

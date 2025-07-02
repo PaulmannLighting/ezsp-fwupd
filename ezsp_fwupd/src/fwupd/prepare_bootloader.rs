@@ -9,6 +9,10 @@ const MODE: u8 = 0x00;
 /// Trait for preparing the bootloader for firmware updates.
 pub trait PrepareBootloader {
     /// Prepare the bootloader for firmware updates.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`std::io::Error`] if the operation fails.
     fn prepare_bootloader(
         self,
         progress_bar: Option<&ProgressBar>,

@@ -1,6 +1,7 @@
 use ashv2::{BaudRate, open};
 use serialport::{FlowControl, SerialPort};
 
+/// Represents a TTY serial port for firmware updates.
 #[derive(Debug)]
 pub struct Tty {
     path: String,
@@ -10,6 +11,7 @@ pub struct Tty {
 
 impl Tty {
     /// Create a new TTY configuration.
+    #[must_use]
     pub const fn new(path: String, baud_rate: BaudRate, flow_control: FlowControl) -> Self {
         Self {
             path,
@@ -19,6 +21,10 @@ impl Tty {
     }
 
     /// Open a new TTY.
+    ///
+    /// # Errors
+    ///
+    /// If the serial port cannot be opened, a [`serialport::Error`] is returned.
     pub fn open(&self) -> serialport::Result<impl SerialPort + 'static> {
         open(self.path.clone(), self.baud_rate, self.flow_control)
     }
