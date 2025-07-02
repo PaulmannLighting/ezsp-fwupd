@@ -72,27 +72,13 @@ impl OtaFile {
 
 impl Display for OtaFile {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "OtaFile {{ magic: {:#04X}, header: {}, security_credentials: {}, upgrade_file_destination: {}, hardware_versions: {:?}, tags: [{}], payload_length: {} }}",
-            HexSlice::new(self.magic()),
-            self.header(),
-            self.security_credentials().map_or_else(
-                || "-".to_string(),
-                |security_credentials| format!("{security_credentials:#04X}")
-            ),
-            self.upgrade_file_destination().map_or_else(
-                || "-".to_string(),
-                |upgrade_file_destination| format!("{upgrade_file_destination}")
-            ),
-            self.hardware_versions(),
-            self.tags()
-                .iter()
-                .map(ToString::to_string)
-                .collect::<Vec<_>>()
-                .join(", "),
-            self.payload.len()
-        )
+        let header = self.header();
+        writeln!(f, "Version:      {}", header.version())?;
+        writeln!(f, "Name:         {}", header.name())?;
+        writeln!(f, "Type:         {}", header.image_type())?;
+        writeln!(f, "Manufacturer: {}", header.manufacturer_id())?;
+        writeln!(f, "Size:         {}", header.image_size())?;
+        Ok(())
     }
 }
 
