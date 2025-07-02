@@ -25,6 +25,7 @@ struct Args {
 
 #[derive(Debug, Subcommand)]
 enum Action {
+    #[clap(name = "update", about = "Update firmware on the device")]
     Update {
         #[clap(index = 1, help = "the serial port to use for firmware update")]
         tty: String,
@@ -35,16 +36,19 @@ enum Action {
         #[clap(long, short, help = "offset in bytes to skip in the firmware file")]
         no_prepare: bool,
     },
+    #[clap(name = "reset", about = "Reset the device")]
     Reset {
         #[clap(index = 1, help = "the serial port to use for firmware update")]
         tty: String,
         #[clap(long, short, help = "serial port timeout in milliseconds")]
         timeout: Option<u64>,
     },
+    #[clap(name = "query", about = "Query the device for version info")]
     Query {
         #[clap(index = 1, help = "the serial port to use for firmware update")]
         tty: String,
     },
+    #[clap(name = "ota", about = "Parse an OTA file")]
     Ota {
         #[clap(index = 1, help = "the firmware file to upload")]
         firmware: PathBuf,
@@ -136,7 +140,7 @@ async fn main() {
                 .expect("Failed to read ota file")
                 .validate()
                 .expect("Failed to validate ota file");
-            println!("OTA file: {ota_file:#04X?}");
+            println!("OTA file: {ota_file}");
         }
     }
 }
