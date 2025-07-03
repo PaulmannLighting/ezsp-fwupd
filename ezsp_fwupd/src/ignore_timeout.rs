@@ -4,6 +4,10 @@ use std::io::{ErrorKind, Result};
 pub trait IgnoreTimeout<T> {
     /// Ignores `TimedOut` errors.
     ///
+    /// # Returns
+    ///
+    /// Returns `Ok(Some(value))` if the result is `Ok(value)`, and `Ok(None)` if the result is an error of kind `TimedOut`.
+    ///
     /// # Errors
     ///
     /// Returns an [`std::io::Error`] if an error occurs other than `TimedOut`.
