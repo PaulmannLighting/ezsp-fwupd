@@ -24,12 +24,14 @@ mod manifest;
 #[tokio::main]
 async fn main() -> ExitCode {
     env_logger::init();
+
     let args = Args::parse();
     let tty = Tty::new(
         args.tty().to_string(),
         BaudRate::RstCts,
         FlowControl::Software,
     );
+
     let Some(current_version) = get_current_version(tty.clone()).await else {
         return ExitCode::FAILURE;
     };
