@@ -16,9 +16,11 @@ use tokio::sync::mpsc::channel;
 use tokio::time::sleep;
 
 use args::Args;
+use direction::Direction;
 use manifest::Manifest;
 
 mod args;
+mod direction;
 mod manifest;
 
 #[tokio::main]
@@ -49,12 +51,13 @@ async fn main() -> ExitCode {
         return ExitCode::FAILURE;
     };
 
-    info!("Active update:    {}", manifest.active().version());
+    info!("Active version:   {}", manifest.active().version());
 
-    if current_version == *manifest.active().version() {
-        info!("Firmware is up to date. No update required.");
+    let Some(direction) = Direction::parse(current_version, manifest.active().version().clone())
+    else {
+        info!("Firmware is up to date. No action required.");
         return ExitCode::SUCCESS;
-    }
+    };
 
     let Ok(ota_file) = read(manifest.active().filename())
         .inspect_err(|error| error!("Failed to read firmware file: {error}"))
@@ -85,7 +88,7 @@ async fn main() -> ExitCode {
     info!("OTA manufacturer: {}", header.manufacturer_id());
     info!("OTA image size:   {}", header.image_size());
 
-    info!("Updating firmware...");
+    info!("{} firmware...", direction.gerund());
     if let Err(error) = tty
         .fwupd(
             ota_file.payload().to_vec(),
@@ -95,30 +98,30 @@ async fn main() -> ExitCode {
         )
         .await
     {
-        error!("Firmware update failed: {error}");
+        error!("Firmware {direction} failed: {error}");
         return ExitCode::FAILURE;
     }
 
     info!(
-        "Firmware update complete, waiting {}s for device to reboot...",
+        "Firmware {direction} complete, waiting {}s for device to reboot...",
         args.reboot_grace_time().as_secs_f32()
     );
     sleep(args.reboot_grace_time()).await;
 
     info!("Validating firmware version.");
-    let Some(current_version_after_update) = get_current_version(tty.clone()).await else {
+    let Some(new_version) = get_current_version(tty.clone()).await else {
         return ExitCode::FAILURE;
     };
 
-    if current_version_after_update != *manifest.active().version() {
+    if new_version != *manifest.active().version() {
         error!(
-            "Firmware update failed: expected version {}, got {current_version_after_update}",
+            "Firmware {direction} failed: expected version {}, got {new_version}",
             manifest.active().version()
         );
         return ExitCode::FAILURE;
     }
 
-    info!("Firmware update successful. New version: {current_version_after_update}");
+    info!("Firmware {direction} successful. New version: {new_version}");
     ExitCode::SUCCESS
 }
 
