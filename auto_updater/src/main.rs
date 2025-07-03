@@ -72,6 +72,12 @@ async fn main() -> ExitCode {
         return ExitCode::FAILURE;
     };
 
+    let Ok(ota_file) = ota_file.validate().inspect_err(|error| {
+        error!("Invalid OTA file magic: {error:#04X?}");
+    }) else {
+        return ExitCode::FAILURE;
+    };
+
     let header = ota_file.header();
     info!("OTA image name:   {}", header.name());
     info!("OTA image type:   {}", header.image_type());
