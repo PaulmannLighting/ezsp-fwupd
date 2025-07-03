@@ -77,7 +77,6 @@ async fn main() -> ExitCode {
     info!("OTA image size:   {}", header.image_size());
 
     info!("Updating firmware...");
-
     if let Err(error) = tty
         .fwupd(
             ota_file.payload().to_vec(),
