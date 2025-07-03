@@ -9,6 +9,10 @@ pub trait ClearBuffer: Read {
     /// Clears the read buffer by reading all available data until EOF.
     ///
     /// Ignores `TimedOut` errors.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`std::io::Error`] if an error occurs other than `TimedOut`.
     fn clear_buffer(&mut self) -> std::io::Result<()> {
         let mut discard = Vec::new();
         self.read_to_end(&mut discard).ignore_timeout()?;

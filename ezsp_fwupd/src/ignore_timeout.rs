@@ -3,6 +3,10 @@ use std::io::{ErrorKind, Result};
 /// Trait to ignore [`ErrorKind::TimedOut`] errors in a [`Result`].
 pub trait IgnoreTimeout<T> {
     /// Ignores `TimedOut` errors.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`std::io::Error`] if an error occurs other than `TimedOut`.
     fn ignore_timeout(self) -> Result<Option<T>>;
 }
 
