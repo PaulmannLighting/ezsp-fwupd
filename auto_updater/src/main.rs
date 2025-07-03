@@ -68,13 +68,16 @@ async fn main() -> ExitCode {
 
     let Ok(ota_file) = OtaFile::from_le_stream_exact(ota_file.into_iter())
         .inspect_err(|error| error!("Failed to parse OTA file: {error}"))
+        .map_err(drop)
+        .and_then(|ota_file| {
+            ota_file
+                .validate()
+                .inspect_err(|error| {
+                    error!("Invalid OTA file magic: {error:#04X?}");
+                })
+                .map_err(drop)
+        })
     else {
-        return ExitCode::FAILURE;
-    };
-
-    let Ok(ota_file) = ota_file.validate().inspect_err(|error| {
-        error!("Invalid OTA file magic: {error:#04X?}");
-    }) else {
         return ExitCode::FAILURE;
     };
 
