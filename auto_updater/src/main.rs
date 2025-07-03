@@ -39,7 +39,7 @@ async fn main() -> ExitCode {
     let Some(current_version) = get_current_version(tty.clone()).await else {
         return ExitCode::FAILURE;
     };
-    info!("Current version: {current_version}");
+    info!("Current version:  {current_version}");
 
     let Ok(json) = read_to_string(args.manifest)
         .inspect_err(|error| error!("Failed to read manifest file: {error}"))
