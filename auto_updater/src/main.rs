@@ -1,11 +1,7 @@
 //! A firmware auto updater for Zigbee devices using the `ezsp` protocol.
 
-mod manifest;
-
 use std::fs::{read, read_to_string};
-use std::path::PathBuf;
 use std::process::ExitCode;
-use std::time::Duration;
 
 use ashv2::BaudRate;
 use clap::Parser;
@@ -19,39 +15,33 @@ use serialport::FlowControl;
 use tokio::sync::mpsc::channel;
 use tokio::time::sleep;
 
-const DEFAULT_MANIFEST: &str = "/etc/ezsp-firmware-update.json";
-const DEFAULT_TIMEOUT: u64 = 1000; // Milliseconds
-const DEFAULT_REBOOT_GRACE_TIME: u64 = 4000; // Milliseconds
+use args::Args;
+use manifest::Manifest;
 
-#[derive(Debug, Parser)]
-struct Args {
-    #[clap(index = 1, help = "the serial port to use for firmware update")]
-    tty: String,
-    #[clap(long, short, help = "the firmware manifest file", default_value = DEFAULT_MANIFEST)]
-    manifest: PathBuf,
-    #[clap(long, short, help = "serial port timeout in milliseconds", default_value_t = DEFAULT_TIMEOUT)]
-    timeout: u64,
-    #[clap(long, short, help = "grace time to wait for the device to reboot", default_value_t = DEFAULT_REBOOT_GRACE_TIME)]
-    reboot_grace_time: u64,
-}
+mod args;
+mod manifest;
 
 #[tokio::main]
 async fn main() -> ExitCode {
     env_logger::init();
     let args = Args::parse();
-    let tty = Tty::new(args.tty, BaudRate::RstCts, FlowControl::Software);
+    let tty = Tty::new(
+        args.tty().to_string(),
+        BaudRate::RstCts,
+        FlowControl::Software,
+    );
     let Some(current_version) = get_current_version(tty.clone()).await else {
         return ExitCode::FAILURE;
     };
     info!("Current version:  {current_version}");
 
-    let Ok(json) = read_to_string(args.manifest)
+    let Ok(json) = read_to_string(args.manifest())
         .inspect_err(|error| error!("Failed to read manifest file: {error}"))
     else {
         return ExitCode::FAILURE;
     };
 
-    let Ok(manifest) = serde_json::from_str::<manifest::Manifest>(&json)
+    let Ok(manifest) = serde_json::from_str::<Manifest>(&json)
         .inspect_err(|error| error!("Failed to parse manifest file: {error}"))
     else {
         return ExitCode::FAILURE;
@@ -97,7 +87,7 @@ async fn main() -> ExitCode {
     if let Err(error) = tty
         .fwupd(
             ota_file.payload().to_vec(),
-            Some(Duration::from_millis(args.timeout)),
+            Some(args.timeout()),
             false,
             None,
         )
@@ -108,10 +98,10 @@ async fn main() -> ExitCode {
     }
 
     info!(
-        "Firmware update complete, waiting {} for device to reboot...",
-        args.reboot_grace_time
+        "Firmware update complete, waiting {}s for device to reboot...",
+        args.reboot_grace_time().as_secs_f32()
     );
-    sleep(Duration::from_millis(args.reboot_grace_time)).await;
+    sleep(args.reboot_grace_time()).await;
 
     info!("Validating firmware version.");
     let Some(current_version_after_update) = get_current_version(tty.clone()).await else {
