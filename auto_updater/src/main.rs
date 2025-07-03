@@ -17,9 +17,11 @@ use log::{error, info};
 use semver::Version;
 use serialport::FlowControl;
 use tokio::sync::mpsc::channel;
+use tokio::time::sleep;
 
 const DEFAULT_MANIFEST: &str = "/etc/ezsp-firmware-update.json";
-const DEFAULT_TIMEOUT: u64 = 1000; // Default timeout in milliseconds
+const DEFAULT_TIMEOUT: u64 = 1000; // Milliseconds
+const DEFAULT_REBOOT_GRACE_TIME: u64 = 4000; // Milliseconds
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -29,6 +31,8 @@ struct Args {
     manifest: PathBuf,
     #[clap(long, short, help = "serial port timeout in milliseconds", default_value_t = DEFAULT_TIMEOUT)]
     timeout: u64,
+    #[clap(long, short, help = "grace time to wait for the device to reboot", default_value_t = DEFAULT_REBOOT_GRACE_TIME)]
+    reboot_grace_time: u64,
 }
 
 #[tokio::main]
@@ -102,6 +106,12 @@ async fn main() -> ExitCode {
         error!("Firmware update failed: {error}");
         return ExitCode::FAILURE;
     }
+
+    info!(
+        "Firmware update complete, waiting {} for device to reboot...",
+        args.reboot_grace_time
+    );
+    sleep(Duration::from_millis(args.reboot_grace_time)).await;
 
     info!("validating firmware version.");
     let Some(current_version_after_update) = get_current_version(tty.clone()).await else {
