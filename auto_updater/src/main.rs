@@ -46,6 +46,10 @@ async fn main() -> ExitCode {
     }
 
     let Some((latest_version, file)) = firmware_files.last_key_value() else {
+        error!(
+            "No valid firmware files found in the specified directory: {}",
+            args.base_dir.display()
+        );
         return ExitCode::FAILURE;
     };
 
