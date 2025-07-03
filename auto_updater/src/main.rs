@@ -1,4 +1,4 @@
-//! A firmware update utility for devices using the `ASHv2` and `XMODEM` protocols.
+//! A firmware auto updater for Zigbee devices using the `ezsp` protocol.
 
 use std::collections::BTreeMap;
 use std::fs::read;
