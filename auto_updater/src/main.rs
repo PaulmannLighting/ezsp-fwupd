@@ -53,6 +53,8 @@ async fn main() -> ExitCode {
         return ExitCode::FAILURE;
     };
 
+    info!("Active update:    {}", manifest.active().version());
+
     if current_version == *manifest.active().version() {
         info!("Firmware is up to date. No update required.");
         return ExitCode::SUCCESS;
