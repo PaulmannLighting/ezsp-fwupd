@@ -103,11 +103,11 @@ async fn main() -> ExitCode {
         return ExitCode::FAILURE;
     }
 
+    info!("validating firmware version.");
     let Some(current_version_after_update) = get_current_version(tty.clone()).await else {
         return ExitCode::FAILURE;
     };
 
-    info!("validating firmware version.");
     if current_version_after_update != *manifest.active().version() {
         error!(
             "Firmware update failed: expected version {}, got {current_version_after_update}",
