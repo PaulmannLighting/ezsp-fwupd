@@ -12,6 +12,7 @@ use ezsp_fwupd::{FrameCount, Fwupd, OtaFile, Reset, Tty};
 use indicatif::{ProgressBar, ProgressStyle};
 use le_stream::FromLeStream;
 use log::error;
+use semver::Version;
 use serialport::FlowControl;
 use tokio::sync::mpsc::channel;
 
@@ -128,7 +129,11 @@ async fn main() {
             match uart.get_ember_version().await {
                 Ok(result) => match result {
                     Ok(version_info) => {
-                        println!("{version_info}")
+                        println!("{version_info}");
+
+                        if let Ok(semver) = Version::try_from(version_info) {
+                            println!("Semver: {semver}");
+                        };
                     }
                     Err(error) => {
                         error!("Failed to parse version info: {error}");

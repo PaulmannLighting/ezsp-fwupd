@@ -218,6 +218,7 @@ dependencies = [
  "indicatif",
  "le-stream",
  "log",
+ "semver",
  "serialport",
  "tokio",
 ]
@@ -361,7 +362,6 @@ dependencies = [
  "indicatif",
  "le-stream",
  "log",
- "semver",
  "serialport",
  "tokio",
 ]
