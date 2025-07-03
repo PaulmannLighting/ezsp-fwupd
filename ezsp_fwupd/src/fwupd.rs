@@ -65,7 +65,6 @@ impl Fwupd for Tty {
 
         progress_bar.set_message("Firmware update complete, resetting device...");
         serial_port.reset(timeout)?;
-        serial_port.clear_buffer()?;
         Ok(())
     }
 }
