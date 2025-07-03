@@ -22,7 +22,7 @@ impl Direction {
 
     /// Returns the english gerund form of the direction.
     #[must_use]
-    pub const fn gerund(self) -> &'static str {
+    pub const fn present_participle(self) -> &'static str {
         match self {
             Direction::Upgrade => "Upgrading",
             Direction::Downgrade => "Downgrading",

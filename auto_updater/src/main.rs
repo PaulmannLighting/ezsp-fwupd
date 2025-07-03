@@ -89,7 +89,7 @@ async fn main() -> ExitCode {
     info!("OTA manufacturer: {}", header.manufacturer_id());
     info!("OTA image size:   {}", header.image_size());
 
-    info!("{} firmware...", direction.gerund());
+    info!("{} firmware...", direction.present_participle());
     if let Err(error) = tty
         .fwupd(
             ota_file.payload().to_vec(),
