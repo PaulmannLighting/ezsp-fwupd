@@ -10,10 +10,10 @@ pub enum Direction {
 impl Direction {
     /// Parses the direction from two versions.
     #[must_use]
-    pub fn from_versions(src: Version, dst: Version) -> Option<Self> {
-        if src < dst {
+    pub fn from_versions(current: Version, new: Version) -> Option<Self> {
+        if current < new {
             Some(Direction::Upgrade)
-        } else if src > dst {
+        } else if current > new {
             Some(Direction::Downgrade)
         } else {
             None
