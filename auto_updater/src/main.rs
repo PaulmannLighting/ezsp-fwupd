@@ -18,13 +18,14 @@ use semver::Version;
 use serialport::FlowControl;
 use tokio::sync::mpsc::channel;
 
+const DEFAULT_MANIFEST: &str = "/etc/ezsp-firmware-update.json";
 const DEFAULT_TIMEOUT: u64 = 1000; // Default timeout in milliseconds
 
 #[derive(Debug, Parser)]
 struct Args {
     #[clap(index = 1, help = "the serial port to use for firmware update")]
     tty: String,
-    #[clap(long, short, help = "the firmware manifest file")]
+    #[clap(long, short, help = "the firmware manifest file", default_value = DEFAULT_MANIFEST)]
     manifest: PathBuf,
     #[clap(long, short, help = "serial port timeout in milliseconds", default_value_t = DEFAULT_TIMEOUT)]
     timeout: u64,
