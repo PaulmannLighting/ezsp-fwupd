@@ -8,24 +8,24 @@ pub enum Direction {
 }
 
 impl Direction {
-    /// Returns the english gerund form of the direction.
-    #[must_use]
-    pub const fn gerund(self) -> &'static str {
-        match self {
-            Direction::Upgrade => "Upgrading",
-            Direction::Downgrade => "Downgrading",
-        }
-    }
-
     /// Parses the direction from two versions.
     #[must_use]
-    pub fn parse(src: Version, dst: Version) -> Option<Self> {
+    pub fn from_versions(src: Version, dst: Version) -> Option<Self> {
         if src < dst {
             Some(Direction::Upgrade)
         } else if src > dst {
             Some(Direction::Downgrade)
         } else {
             None
+        }
+    }
+
+    /// Returns the english gerund form of the direction.
+    #[must_use]
+    pub const fn gerund(self) -> &'static str {
+        match self {
+            Direction::Upgrade => "Upgrading",
+            Direction::Downgrade => "Downgrading",
         }
     }
 }

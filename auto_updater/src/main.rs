@@ -53,7 +53,8 @@ async fn main() -> ExitCode {
 
     info!("Active version:   {}", manifest.active().version());
 
-    let Some(direction) = Direction::parse(current_version, manifest.active().version().clone())
+    let Some(direction) =
+        Direction::from_versions(current_version, manifest.active().version().clone())
     else {
         info!("Firmware is up to date. No action required.");
         return ExitCode::SUCCESS;
