@@ -109,6 +109,7 @@ async fn main() -> ExitCode {
     ExitCode::SUCCESS
 }
 
+/// Get the current firmware version from the Zigbee device.
 async fn get_current_version(tty: Tty) -> Option<Version> {
     let Ok(serial_port) = tty.open().inspect_err(|error| error!("{error}")) else {
         return None;
@@ -138,6 +139,9 @@ async fn get_current_version(tty: Tty) -> Option<Version> {
     }
 }
 
+/// List all firmware files in the specified directory.
+///
+/// Valid firmware files must have the `.ota` extension and contain a valid semver in their filename.
 fn list_firmware_files(base_dir: &PathBuf) -> BTreeMap<Version, PathBuf> {
     let mut files = BTreeMap::new();
 
