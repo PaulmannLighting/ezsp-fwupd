@@ -2,7 +2,7 @@ use ashv2::{BaudRate, open};
 use serialport::{FlowControl, SerialPort};
 
 /// Represents a TTY serial port for firmware updates.
-#[derive(Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Tty {
     path: String,
     baud_rate: BaudRate,

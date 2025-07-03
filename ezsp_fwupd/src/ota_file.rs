@@ -87,6 +87,12 @@ impl OtaFile {
             Err(self.magic)
         }
     }
+
+    /// Convert the OTA file into a payload vector.
+    #[must_use]
+    pub fn into_payload(self) -> Vec<u8> {
+        self.payload
+    }
 }
 
 impl Display for OtaFile {
