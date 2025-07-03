@@ -118,6 +118,7 @@ async fn main() -> ExitCode {
         return ExitCode::FAILURE;
     }
 
+    info!("Firmware update successful. New version: {current_version_after_update}");
     ExitCode::SUCCESS
 }
 
