@@ -113,7 +113,7 @@ async fn main() -> ExitCode {
     );
     sleep(Duration::from_millis(args.reboot_grace_time)).await;
 
-    info!("validating firmware version.");
+    info!("Validating firmware version.");
     let Some(current_version_after_update) = get_current_version(tty.clone()).await else {
         return ExitCode::FAILURE;
     };
