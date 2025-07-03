@@ -5,12 +5,10 @@ pub use flash_progress::FlashProgress;
 pub use fwupd::{FrameCount, Fwupd, Reset, Tty};
 pub use ignore_timeout::IgnoreTimeout;
 pub use ota_file::OtaFile;
-pub use version_from_filename::VersionFromFilename;
 
 mod clear_buffer;
 mod flash_progress;
 mod fwupd;
 mod ignore_timeout;
 mod ota_file;
-mod version_from_filename;
 mod xmodem;

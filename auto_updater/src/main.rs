@@ -1,7 +1,8 @@
 //! A firmware auto updater for Zigbee devices using the `ezsp` protocol.
 
-use std::collections::BTreeMap;
-use std::fs::read;
+mod manifest;
+
+use std::fs::{read, read_to_string};
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::time::Duration;
@@ -10,9 +11,9 @@ use ashv2::BaudRate;
 use clap::Parser;
 use ezsp::uart::Uart;
 use ezsp::{Callback, GetValueExt};
-use ezsp_fwupd::{Fwupd, OtaFile, Tty, VersionFromFilename};
+use ezsp_fwupd::{Fwupd, OtaFile, Tty};
 use le_stream::FromLeStream;
-use log::{error, info, warn};
+use log::{error, info};
 use semver::Version;
 use serialport::FlowControl;
 use tokio::sync::mpsc::channel;
@@ -23,8 +24,8 @@ const DEFAULT_TIMEOUT: u64 = 1000; // Default timeout in milliseconds
 struct Args {
     #[clap(index = 1, help = "the serial port to use for firmware update")]
     tty: String,
-    #[clap(long, short, help = "the firmware files' base directory")]
-    base_dir: PathBuf,
+    #[clap(long, short, help = "the firmware manifest file")]
+    manifest: PathBuf,
     #[clap(long, short, help = "serial port timeout in milliseconds", default_value_t = DEFAULT_TIMEOUT)]
     timeout: u64,
 }
@@ -37,31 +38,27 @@ async fn main() -> ExitCode {
     let Some(current_version) = get_current_version(tty.clone()).await else {
         return ExitCode::FAILURE;
     };
-
     info!("Current version: {current_version}");
-    let firmware_files = list_firmware_files(&args.base_dir);
 
-    for version in firmware_files.keys() {
-        info!("Available firmware version: {version}");
-    }
-
-    let Some((latest_version, file)) = firmware_files.last_key_value() else {
-        error!(
-            "No valid firmware files found in the specified directory: {}",
-            args.base_dir.display()
-        );
+    let Ok(json) = read_to_string(args.manifest)
+        .inspect_err(|error| error!("Failed to read manifest file: {error}"))
+    else {
         return ExitCode::FAILURE;
     };
 
-    if current_version > *latest_version {
-        info!(
-            "No firmware update needed. Current version: {current_version} >= Latest version: {latest_version}"
-        );
+    let Ok(manifest) = serde_json::from_str::<manifest::Manifest>(&json)
+        .inspect_err(|error| error!("Failed to parse manifest file: {error}"))
+    else {
+        return ExitCode::FAILURE;
+    };
+
+    if current_version == *manifest.active().version() {
+        info!("Firmware is up to date. No update required.");
         return ExitCode::SUCCESS;
     }
 
-    let Ok(ota_file) =
-        read(file).inspect_err(|error| error!("Failed to read firmware file: {error}"))
+    let Ok(ota_file) = read(manifest.active().filename())
+        .inspect_err(|error| error!("Failed to read firmware file: {error}"))
     else {
         return ExitCode::FAILURE;
     };
@@ -108,9 +105,10 @@ async fn main() -> ExitCode {
     };
 
     info!("validating firmware version.");
-    if current_version_after_update != *latest_version {
+    if current_version_after_update != *manifest.active().version() {
         error!(
-            "Firmware update failed: expected version {latest_version}, got {current_version_after_update}"
+            "Firmware update failed: expected version {}, got {current_version_after_update}",
+            manifest.active().version()
         );
         return ExitCode::FAILURE;
     }
@@ -146,31 +144,4 @@ async fn get_current_version(tty: Tty) -> Option<Version> {
             None
         }
     }
-}
-
-/// List all firmware files in the specified directory.
-///
-/// Valid firmware files must have the `.ota` extension and contain a valid semver in their filename.
-fn list_firmware_files(base_dir: &PathBuf) -> BTreeMap<Version, PathBuf> {
-    let mut files = BTreeMap::new();
-
-    if let Ok(entries) = std::fs::read_dir(base_dir) {
-        for entry in entries.flatten() {
-            if let Ok(path) = entry.path().canonicalize() {
-                if path.is_file() {
-                    if path.extension().is_some_and(|ext| ext == "ota") {
-                        if let Some(version) = path.version_from_filename() {
-                            files.insert(version, path);
-                        } else {
-                            warn!("Failed to extract version from file: {}", path.display());
-                        }
-                    } else {
-                        warn!("File does not have a valid extension: {}", path.display());
-                    }
-                }
-            }
-        }
-    }
-
-    files
 }
