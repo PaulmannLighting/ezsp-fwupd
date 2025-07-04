@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-ashv2 = { version = "0.2", git = "https://github.com/PaulmannLighting/ashv2.git" }
+ashv2 = "1.0"
 clap = { version = "4.5.40", features = ["derive"] }
 env_logger = "0.11.8"
-ezsp = { version = "0.2", git = "https://github.com/PaulmannLighting/ezsp.git", features = ["semver"] }
+ezsp = { version = "1.0", features = ["semver"] }
 ezsp-fwupd = { path = "../ezsp_fwupd" }
 indicatif = "0.18"
 le-stream = { version = "2", features = ["derive"] }
