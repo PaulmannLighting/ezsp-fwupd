@@ -8,8 +8,8 @@ ashv2 = { version = "0.2", git = "https://github.com/PaulmannLighting/ashv2.git"
 bitflags = "2.9"
 crc = "3.3"
 ezsp = { version = "0.2", git = "https://github.com/PaulmannLighting/ezsp.git", features = ["ashv2"] }
-indicatif = "0.17"
-le-stream = { version = "1.2", features = ["derive"] }
+indicatif = "0.18"
+le-stream = { version = "2", features = ["derive"] }
 log = "0.4"
 serialport = "4.7"
 tokio = { version = "1.46", features = ["sync"] }

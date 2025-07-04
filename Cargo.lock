@@ -79,7 +79,7 @@ dependencies = [
 [[package]]
 name = "ashv2"
 version = "0.2.1"
-source = "git+https://github.com/PaulmannLighting/ashv2.git#e18c6d9994e049c968395e8f58a76da0f5b2d836"
+source = "git+https://github.com/PaulmannLighting/ashv2.git#0aad19b7b9fe7e03a156e49edeeaa40c0e2d0eec"
 dependencies = [
  "bitflags 2.9.1",
  "crc",
@@ -331,7 +331,7 @@ dependencies = [
 [[package]]
 name = "ezsp"
 version = "0.2.0"
-source = "git+https://github.com/PaulmannLighting/ezsp.git#05dd67f02ef2d945d614e16ee76dea6dc68ffab1"
+source = "git+https://github.com/PaulmannLighting/ezsp.git#75b10e46316fce0057f2c3aa3beda6d8b4ba97b1"
 dependencies = [
  "ashv2",
  "bitflags 2.9.1",
@@ -488,9 +488,9 @@ checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
 name = "indicatif"
-version = "0.17.12"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4adb2ee6ad319a912210a36e56e3623555817bcc877a7e6e8802d1d69c4d8056"
+checksum = "70a646d946d06bedbbc4cac4c218acf4bbf2d87757a784857025f4d447e4e1cd"
 dependencies = [
  "console",
  "portable-atomic",
@@ -577,9 +577,9 @@ dependencies = [
 
 [[package]]
 name = "le-stream"
-version = "1.2.0"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75d609a898cb3c73743539e69eeb08b0449ddd8457e5cbf99f729c3463276489"
+checksum = "a567e19cdd938d99a115594b5195e5bd2447ccbd5c7e7e3576760b4bb2bd8592"
 dependencies = [
  "heapless",
  "le-stream-derive",
@@ -883,7 +883,7 @@ dependencies = [
 [[package]]
 name = "silizium"
 version = "0.5.1"
-source = "git+https://github.com/PaulmannLighting/silizium.git#d11ffb28487806a4b1634c75d3ba3d9acd208710"
+source = "git+https://github.com/PaulmannLighting/silizium.git#b9e231fd59db72391da8de2b394b271453148587"
 dependencies = [
  "bitflags 2.9.1",
  "le-stream",
