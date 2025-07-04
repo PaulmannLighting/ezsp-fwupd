@@ -26,8 +26,8 @@ struct Args {
 
 #[derive(Debug, Subcommand)]
 enum Action {
-    #[clap(name = "update", about = "Update firmware on the device")]
-    Update {
+    #[clap(name = "flash", about = "Flash firmware onto the device")]
+    Flash {
         #[clap(index = 1, help = "the serial port to use for firmware update")]
         tty: String,
         #[clap(index = 2, help = "the firmware file to upload")]
@@ -64,7 +64,7 @@ async fn main() {
     let args = Args::parse();
 
     match args.action {
-        Action::Update {
+        Action::Flash {
             tty,
             firmware,
             timeout,
