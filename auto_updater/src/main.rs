@@ -1,6 +1,7 @@
 //! A firmware auto updater for Zigbee devices using the `ezsp` protocol.
 
 use std::fs::{read, read_to_string};
+use std::io::ErrorKind;
 use std::process::ExitCode;
 
 use ashv2::BaudRate;
@@ -39,10 +40,20 @@ async fn main() -> ExitCode {
     };
     info!("Current version:  {current_version}");
 
-    let Ok(json) = read_to_string(args.manifest())
-        .inspect_err(|error| error!("Failed to read manifest file: {error}"))
-    else {
-        return ExitCode::FAILURE;
+    let json = match read_to_string(args.manifest()) {
+        Ok(json) => json,
+        Err(error) => {
+            if error.kind() == ErrorKind::NotFound {
+                info!("No manifest file found at '{}'.", args.manifest().display());
+                return ExitCode::SUCCESS;
+            }
+
+            error!(
+                "Failed to read manifest file '{}': {error}",
+                args.manifest().display()
+            );
+            return ExitCode::FAILURE;
+        }
     };
 
     let Ok(manifest) = serde_json::from_str::<Manifest>(&json)
@@ -51,16 +62,20 @@ async fn main() -> ExitCode {
         return ExitCode::FAILURE;
     };
 
-    info!("Active version:   {}", manifest.active().version());
+    let Some(active) = manifest.active() else {
+        info!("No active firmware version found in the manifest.");
+        return ExitCode::SUCCESS;
+    };
 
-    let Some(direction) =
-        Direction::from_versions(current_version, manifest.active().version().clone())
+    info!("Active version:   {}", active.version());
+
+    let Some(direction) = Direction::from_versions(current_version, active.version().clone())
     else {
         info!("Firmware is up to date. No action required.");
         return ExitCode::SUCCESS;
     };
 
-    let Ok(ota_file) = read(manifest.active().filename())
+    let Ok(ota_file) = read(active.filename())
         .inspect_err(|error| error!("Failed to read firmware file: {error}"))
     else {
         return ExitCode::FAILURE;
@@ -114,10 +129,10 @@ async fn main() -> ExitCode {
         return ExitCode::FAILURE;
     };
 
-    if new_version != *manifest.active().version() {
+    if new_version != *active.version() {
         error!(
             "Firmware {direction} failed: expected version {}, got {new_version}",
-            manifest.active().version()
+            active.version()
         );
         return ExitCode::FAILURE;
     }
