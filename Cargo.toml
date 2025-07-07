@@ -4,5 +4,4 @@ members = ["cli", "ezsp_fwupd", "auto_updater"]
 
 [profile.release]
 opt-level = 3
-strip = "symbols"
 panic = "abort"
