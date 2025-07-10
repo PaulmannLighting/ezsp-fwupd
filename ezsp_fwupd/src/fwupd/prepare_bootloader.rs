@@ -6,20 +6,20 @@ use tokio::sync::mpsc::channel;
 const MODE: u8 = 0x00;
 
 /// Trait for preparing the bootloader for firmware updates.
-pub trait PrepareBootloader {
+pub trait PrepareBootloader: Sized {
     /// Prepare the bootloader for firmware updates.
     ///
     /// # Errors
     ///
     /// Returns an [`std::io::Error`] if the operation fails.
-    fn prepare_bootloader(self) -> impl Future<Output = std::io::Result<()>>;
+    fn prepare_bootloader(self) -> impl Future<Output = std::io::Result<Self>>;
 }
 
 impl<T> PrepareBootloader for T
 where
     T: SerialPort + 'static,
 {
-    async fn prepare_bootloader(self) -> std::io::Result<()> {
+    async fn prepare_bootloader(self) -> std::io::Result<Self> {
         let (callbacks_tx, _callbacks_rx) = channel::<Callback>(8);
         let mut uart = Uart::new(self, callbacks_tx, 8, 8);
 
@@ -29,6 +29,6 @@ where
             .unwrap_or_else(|error| {
                 error!("Failed to launch standalone bootloader: {error}");
             });
-        Ok(())
+        Ok(uart.terminate())
     }
 }

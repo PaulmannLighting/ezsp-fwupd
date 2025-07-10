@@ -4,15 +4,15 @@ use std::fs::{read, read_to_string};
 use std::io::ErrorKind;
 use std::process::ExitCode;
 
-use ashv2::BaudRate;
+use ashv2::{BaudRate, open};
 use clap::Parser;
 use ezsp::uart::Uart;
 use ezsp::{Callback, GetValueExt};
-use ezsp_fwupd::{Fwupd, OtaFile, Tty};
+use ezsp_fwupd::{Fwupd, OtaFile};
 use le_stream::FromLeStream;
 use log::{error, info};
 use semver::Version;
-use serialport::FlowControl;
+use serialport::{FlowControl, SerialPort};
 use tokio::sync::mpsc::channel;
 use tokio::time::sleep;
 
@@ -29,13 +29,17 @@ async fn main() -> ExitCode {
     env_logger::init();
 
     let args = Args::parse();
-    let tty = Tty::new(
+
+    let Ok(serial_port) = open(
         args.tty().to_string(),
         BaudRate::RstCts,
         FlowControl::Software,
-    );
+    )
+    .inspect_err(|error| error!("Failed to open serial port '{}': {error}", args.tty())) else {
+        return ExitCode::FAILURE;
+    };
 
-    let Some(current_version) = get_current_version(tty.clone()).await else {
+    let (serial_port, Some(current_version)) = get_current_version(serial_port).await else {
         return ExitCode::FAILURE;
     };
     info!("Current version:  {current_version}");
@@ -105,7 +109,7 @@ async fn main() -> ExitCode {
     info!("OTA image size:   {}", header.image_size());
 
     info!("{} firmware...", direction.present_participle());
-    if let Err(error) = tty
+    let serial_port = match serial_port
         .fwupd(
             ota_file.payload().to_vec(),
             Some(args.timeout()),
@@ -114,9 +118,12 @@ async fn main() -> ExitCode {
         )
         .await
     {
-        error!("Firmware {direction} failed: {error}");
-        return ExitCode::FAILURE;
-    }
+        Ok(serial_port) => serial_port,
+        Err(error) => {
+            error!("Firmware {direction} failed: {error}");
+            return ExitCode::FAILURE;
+        }
+    };
 
     info!(
         "Firmware {direction} complete, waiting {}s for device to reboot...",
@@ -125,7 +132,7 @@ async fn main() -> ExitCode {
     sleep(args.reboot_grace_time()).await;
 
     info!("Validating firmware version.");
-    let Some(new_version) = get_current_version(tty.clone()).await else {
+    let (_, Some(new_version)) = get_current_version(serial_port).await else {
         return ExitCode::FAILURE;
     };
 
@@ -142,15 +149,14 @@ async fn main() -> ExitCode {
 }
 
 /// Get the current firmware version from the Zigbee device.
-async fn get_current_version(tty: Tty) -> Option<Version> {
-    let Ok(serial_port) = tty.open().inspect_err(|error| error!("{error}")) else {
-        return None;
-    };
-
+async fn get_current_version<T>(serial_port: T) -> (T, Option<Version>)
+where
+    T: SerialPort + 'static,
+{
     let (callbacks_tx, _callbacks_rx) = channel::<Callback>(8);
     let mut uart = Uart::new(serial_port, callbacks_tx, 8, 8);
 
-    match uart.get_ember_version().await {
+    let version = match uart.get_ember_version().await {
         Ok(result) => match result {
             Ok(version_info) => match version_info.try_into() {
                 Ok(version) => Some(version),
@@ -168,5 +174,7 @@ async fn get_current_version(tty: Tty) -> Option<Version> {
             error!("Failed to get version info: {error}");
             None
         }
-    }
+    };
+
+    (uart.terminate(), version)
 }

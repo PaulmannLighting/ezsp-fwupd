@@ -1,13 +1,13 @@
 [package]
 name = "ezsp-fwupd"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2024"
 
 [dependencies]
-ashv2 = "1.0"
+ashv2 = "1.1"
 bitflags = "2.9"
 crc = "3.3"
-ezsp = { version = "1.0", features = ["ashv2"] }
+ezsp = { version = "1.1", features = ["ashv2"] }
 indicatif = "0.18"
 le-stream = { version = "2", features = ["derive"] }
 log = "0.4"

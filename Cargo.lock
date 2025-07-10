@@ -78,9 +78,9 @@ dependencies = [
 
 [[package]]
 name = "ashv2"
-version = "1.0.0"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b128aa3934afbbf3feff0ca3da9411d191737e6e40cd0c45dd5a95329a692c91"
+checksum = "750d83d9dd20e882ef5000e8d5e42c30b1999f76ae411ac9c5df5b34d8b82c60"
 dependencies = [
  "bitflags 2.9.1",
  "crc",
@@ -163,9 +163,9 @@ checksum = "9555578bc9e57714c812a1f84e4fc5b4d21fcb063490c624de019f7464c91268"
 
 [[package]]
 name = "clap"
-version = "4.5.40"
+version = "4.5.41"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40b6887a1d8685cebccf115538db5c0efe625ccac9696ad45c409d96566e910f"
+checksum = "be92d32e80243a54711e5d7ce823c35c41c9d929dc4ab58e1276f625841aadf9"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -173,9 +173,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.5.40"
+version = "4.5.41"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0c66c08ce9f0c698cbce5c0279d0bb6ac936d8674174fe48f736533b964f59e"
+checksum = "707eab41e9622f9139419d573eca0900137718000c517d47da73045f54331c3d"
 dependencies = [
  "anstream",
  "anstyle",
@@ -185,9 +185,9 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "4.5.40"
+version = "4.5.41"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2c7947ae4cc3d851207c1adb5b5e260ff0cca11446b1d6d1423788e442257ce"
+checksum = "ef4f52386a59ca4c860f7393bcf8abd8dfd91ecccc0f774635ff68e92eeef491"
 dependencies = [
  "heck",
  "proc-macro2",
@@ -325,9 +325,9 @@ dependencies = [
 
 [[package]]
 name = "ezsp"
-version = "1.0.0"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1f3d6087f332ddf19774da78f728d8d9b2711f8da16f913fb17bc239d805007"
+checksum = "470003518e6388e24f91da03c17ade272c1add684af80ce493744503d5c93f02"
 dependencies = [
  "ashv2",
  "bitflags 2.9.1",
@@ -347,7 +347,7 @@ dependencies = [
 
 [[package]]
 name = "ezsp-fwupd"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "ashv2",
  "bitflags 2.9.1",
@@ -843,9 +843,9 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "1.46.0"
+version = "1.46.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1140bb80481756a8cbe10541f37433b459c5aa1e727b4c020fbfebdc25bf3ec4"
+checksum = "0cc3a2344dafbe23a245241fe8b09735b521110d30fcefbbd5feb1797ca35d17"
 dependencies = [
  "backtrace",
  "io-uring",

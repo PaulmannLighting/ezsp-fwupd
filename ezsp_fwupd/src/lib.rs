@@ -2,7 +2,7 @@
 
 pub use clear_buffer::ClearBuffer;
 pub use flash_progress::FlashProgress;
-pub use fwupd::{FrameCount, Fwupd, Reset, Tty};
+pub use fwupd::{FrameCount, Fwupd, Reset};
 pub use ignore_timeout::IgnoreTimeout;
 pub use ota_file::OtaFile;
 
