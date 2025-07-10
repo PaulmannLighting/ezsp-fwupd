@@ -6,22 +6,21 @@ use std::process::ExitCode;
 
 use ashv2::{BaudRate, open};
 use clap::Parser;
-use ezsp::uart::Uart;
-use ezsp::{Callback, GetValueExt};
+use ezsp::{Callback, uart::Uart};
 use ezsp_fwupd::{Fwupd, OtaFile};
 use le_stream::FromLeStream;
 use log::{error, info};
-use semver::Version;
-use serialport::{FlowControl, SerialPort};
-use tokio::sync::mpsc::channel;
-use tokio::time::sleep;
+use serialport::FlowControl;
+use tokio::{sync::mpsc::channel, time::sleep};
 
 use args::Args;
 use direction::Direction;
+use get_current_version::GetCurrentVersion;
 use manifest::Manifest;
 
 mod args;
 mod direction;
+mod get_current_version;
 mod manifest;
 
 #[tokio::main]
@@ -39,9 +38,14 @@ async fn main() -> ExitCode {
         return ExitCode::FAILURE;
     };
 
-    let (serial_port, Some(current_version)) = get_current_version(serial_port).await else {
+    let (callbacks_tx, _callbacks_rx) = channel::<Callback>(8);
+    let mut uart = Uart::new(serial_port, callbacks_tx, 8, 8);
+
+    let Some(current_version) = uart.get_current_version().await else {
         return ExitCode::FAILURE;
     };
+
+    let serial_port = uart.terminate();
     info!("Current version:  {current_version}");
 
     let json = match read_to_string(args.manifest()) {
@@ -131,8 +135,11 @@ async fn main() -> ExitCode {
     );
     sleep(args.reboot_grace_time()).await;
 
+    let (callbacks_tx, _callbacks_rx) = channel::<Callback>(8);
+    let mut uart = Uart::new(serial_port, callbacks_tx, 8, 8);
+
     info!("Validating firmware version.");
-    let (_, Some(new_version)) = get_current_version(serial_port).await else {
+    let Some(new_version) = uart.get_current_version().await else {
         return ExitCode::FAILURE;
     };
 
@@ -146,35 +153,4 @@ async fn main() -> ExitCode {
 
     info!("Firmware {direction} successful. New version: {new_version}");
     ExitCode::SUCCESS
-}
-
-/// Get the current firmware version from the Zigbee device.
-async fn get_current_version<T>(serial_port: T) -> (T, Option<Version>)
-where
-    T: SerialPort + 'static,
-{
-    let (callbacks_tx, _callbacks_rx) = channel::<Callback>(8);
-    let mut uart = Uart::new(serial_port, callbacks_tx, 8, 8);
-
-    let version = match uart.get_ember_version().await {
-        Ok(result) => match result {
-            Ok(version_info) => match version_info.try_into() {
-                Ok(version) => Some(version),
-                Err(error) => {
-                    error!("Failed to parse version info: {error}");
-                    None
-                }
-            },
-            Err(error) => {
-                error!("Failed to parse version info: {error}");
-                None
-            }
-        },
-        Err(error) => {
-            error!("Failed to get version info: {error}");
-            None
-        }
-    };
-
-    (uart.terminate(), version)
 }
