@@ -15,8 +15,10 @@ use le_stream::FromLeStream;
 use log::{error, info};
 use manifest::Manifest;
 use serialport::{FlowControl, SerialPort};
-use tokio::sync::mpsc::Receiver;
-use tokio::{sync::mpsc::channel, time::sleep};
+use tokio::{
+    sync::mpsc::{Receiver, channel},
+    time::sleep,
+};
 
 mod args;
 mod direction;
