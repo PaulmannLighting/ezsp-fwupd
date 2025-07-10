@@ -19,3 +19,6 @@ tokio = { version = "1.46", features = ["macros", "rt", "rt-multi-thread"] }
 [[bin]]
 name = "ezsp-fwupd"
 path = "src/main.rs"
+
+[lints]
+workspace = true

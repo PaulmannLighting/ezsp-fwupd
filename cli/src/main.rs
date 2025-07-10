@@ -1,7 +1,7 @@
 //! A firmware update utility for devices using the `ASHv2` and `XMODEM` protocols.
 
 use std::fs::read;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::time::Duration;
 
@@ -67,117 +67,127 @@ async fn main() -> ExitCode {
     match args.action {
         Action::Flash {
             tty,
-            firmware,
+            ref firmware,
             timeout,
             no_prepare,
-        } => {
-            let firmware: Vec<u8> = read(firmware).expect("Failed to read firmware file");
-            let ota_file = OtaFile::from_le_stream_exact(firmware.into_iter())
-                .expect("Failed to read ota file")
-                .validate()
-                .expect("Failed to validate ota file");
-            let firmware = ota_file.payload().to_vec();
-            let progress_bar = ProgressBar::new(firmware.frame_count() as u64);
-            progress_bar.set_style(
-                ProgressStyle::with_template(
-                    "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}",
-                )
-                .unwrap()
-                .progress_chars("##-"),
-            );
-            progress_bar.println("### Firmware update info ###");
-            progress_bar.println(ota_file.to_string());
+        } => flash(tty, firmware, Duration::from_millis(timeout), no_prepare).await,
+        Action::Reset { ref tty, timeout } => reset(tty, timeout.map(Duration::from_millis)),
+        Action::Query { ref tty } => query(tty).await,
+        Action::Ota {
+            ref firmware,
+            debug,
+        } => ota(firmware, debug),
+    }
+}
 
-            let Ok(serial_port) = open(tty.clone(), BaudRate::RstCts, FlowControl::Software)
-                .inspect_err(|error| error!("Failed to open serial port '{tty}': {error}"))
-            else {
-                return ExitCode::FAILURE;
-            };
+/// Flash the firmware onto the device.
+async fn flash(tty: String, firmware: &Path, timeout: Duration, no_prepare: bool) -> ExitCode {
+    let firmware: Vec<u8> = read(firmware).expect("Failed to read firmware file");
+    let ota_file = OtaFile::from_le_stream_exact(firmware.into_iter())
+        .expect("Failed to read ota file")
+        .validate()
+        .expect("Failed to validate ota file");
+    let firmware = ota_file.payload().to_vec();
+    let progress_bar = ProgressBar::new(firmware.frame_count() as u64);
+    progress_bar.set_style(
+        ProgressStyle::with_template(
+            "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}",
+        )
+        .unwrap()
+        .progress_chars("##-"),
+    );
+    progress_bar.println("### Firmware update info ###");
+    progress_bar.println(ota_file.to_string());
 
-            let result = serial_port
-                .fwupd(
-                    firmware,
-                    Some(Duration::from_millis(timeout)),
-                    no_prepare,
-                    Some(&progress_bar),
-                )
-                .await
-                .map(drop);
+    let Ok(serial_port) = open(tty.clone(), BaudRate::RstCts, FlowControl::Software)
+        .inspect_err(|error| error!("Failed to open serial port '{tty}': {error}"))
+    else {
+        return ExitCode::FAILURE;
+    };
 
-            progress_bar.finish();
+    let result = serial_port
+        .fwupd(firmware, Some(timeout), no_prepare, Some(&progress_bar))
+        .await
+        .map(drop);
 
-            if let Err(error) = result {
-                error!("Firmware update failed: {error}");
-                return ExitCode::FAILURE;
-            };
+    progress_bar.finish();
 
-            ExitCode::SUCCESS
-        }
-        Action::Reset { tty, timeout } => {
-            let Ok(mut serial_port) = open(tty.clone(), BaudRate::RstCts, FlowControl::Software)
-                .inspect_err(|error| error!("Failed to open serial port '{tty}': {error}"))
-            else {
-                return ExitCode::FAILURE;
-            };
+    if let Err(error) = result {
+        error!("Firmware update failed: {error}");
+        return ExitCode::FAILURE;
+    }
 
-            if let Err(error) = serial_port.reset(timeout.map(Duration::from_millis)) {
-                error!("Failed to reset device: {error}");
-                return ExitCode::FAILURE;
-            };
+    ExitCode::SUCCESS
+}
 
-            ExitCode::SUCCESS
-        }
-        Action::Query { tty } => {
-            let Ok(serial_port) = open(tty.clone(), BaudRate::RstCts, FlowControl::Software)
-                .inspect_err(|error| error!("Failed to open serial port '{tty}': {error}"))
-            else {
-                return ExitCode::FAILURE;
-            };
+/// Reset the device.
+fn reset(tty: &str, timeout: Option<Duration>) -> ExitCode {
+    let Ok(mut serial_port) = open(tty.to_string(), BaudRate::RstCts, FlowControl::Software)
+        .inspect_err(|error| error!("Failed to open serial port '{tty}': {error}"))
+    else {
+        return ExitCode::FAILURE;
+    };
 
-            let (callbacks_tx, _callbacks_rx) = channel::<Callback>(8);
-            let mut uart = Uart::new(serial_port, callbacks_tx, 8, 8);
+    if let Err(error) = serial_port.reset(timeout) {
+        error!("Failed to reset device: {error}");
+        return ExitCode::FAILURE;
+    }
 
-            match uart.get_ember_version().await {
-                Ok(result) => match result {
-                    Ok(version_info) => {
-                        println!("{version_info}");
+    ExitCode::SUCCESS
+}
 
-                        if let Ok(semver) = Version::try_from(version_info) {
-                            println!("Semver: {semver}");
-                        };
+/// Query the device for version info.
+async fn query(tty: &str) -> ExitCode {
+    let Ok(serial_port) = open(tty.to_string(), BaudRate::RstCts, FlowControl::Software)
+        .inspect_err(|error| error!("Failed to open serial port '{tty}': {error}"))
+    else {
+        return ExitCode::FAILURE;
+    };
 
-                        ExitCode::SUCCESS
-                    }
-                    Err(error) => {
-                        error!("Failed to parse version info: {error}");
-                        ExitCode::FAILURE
-                    }
-                },
-                Err(error) => {
-                    error!("Failed to get version info: {error}");
-                    ExitCode::FAILURE
+    let (callbacks_tx, _callbacks_rx) = channel::<Callback>(8);
+    let mut uart = Uart::new(serial_port, callbacks_tx, 8, 8);
+
+    match uart.get_ember_version().await {
+        Ok(result) => match result {
+            Ok(version_info) => {
+                println!("{version_info}");
+
+                if let Ok(semver) = Version::try_from(version_info) {
+                    println!("Semver: {semver}");
                 }
+
+                ExitCode::SUCCESS
             }
-        }
-        Action::Ota { firmware, debug } => {
-            let firmware: Vec<u8> = read(firmware).expect("Failed to read firmware file");
-            let Ok(ota_file) = OtaFile::from_le_stream_exact(firmware.into_iter()) else {
-                error!("Failed to read ota file");
-                return ExitCode::FAILURE;
-            };
-
-            let Ok(ota_file) = ota_file.validate() else {
-                error!("Failed to validate ota file");
-                return ExitCode::FAILURE;
-            };
-
-            if debug {
-                println!("Ota file:\n{ota_file:#04X?}");
-            } else {
-                println!("{ota_file}");
+            Err(error) => {
+                error!("Failed to parse version info: {error}");
+                ExitCode::FAILURE
             }
-
-            ExitCode::SUCCESS
+        },
+        Err(error) => {
+            error!("Failed to get version info: {error}");
+            ExitCode::FAILURE
         }
     }
+}
+
+/// Parse an OTA file.
+fn ota(firmware: &Path, debug: bool) -> ExitCode {
+    let firmware: Vec<u8> = read(firmware).expect("Failed to read firmware file");
+    let Ok(ota_file) = OtaFile::from_le_stream_exact(firmware.into_iter()) else {
+        error!("Failed to read ota file");
+        return ExitCode::FAILURE;
+    };
+
+    let Ok(ota_file) = ota_file.validate() else {
+        error!("Failed to validate ota file");
+        return ExitCode::FAILURE;
+    };
+
+    if debug {
+        println!("Ota file:\n{ota_file:#04X?}");
+    } else {
+        println!("{ota_file}");
+    }
+
+    ExitCode::SUCCESS
 }

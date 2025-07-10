@@ -32,12 +32,12 @@ impl Args {
     }
 
     /// Return the serial port timeout.
-    pub fn timeout(&self) -> Duration {
+    pub const fn timeout(&self) -> Duration {
         Duration::from_millis(self.timeout)
     }
 
     /// Return the grace time to wait for the device to reboot.
-    pub fn reboot_grace_time(&self) -> Duration {
+    pub const fn reboot_grace_time(&self) -> Duration {
         Duration::from_millis(self.reboot_grace_time)
     }
 }

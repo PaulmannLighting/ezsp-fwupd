@@ -2,13 +2,14 @@
 
 use std::fs::read;
 use std::process::ExitCode;
+use std::time::Duration;
 
 use args::Args;
 use ashv2::{BaudRate, open};
 use clap::Parser;
+use current_version::CurrentVersion;
 use direction::Direction;
 use ezsp_fwupd::{Fwupd, OtaFile};
-use get_current_version::GetCurrentVersion;
 use le_stream::FromLeStream;
 use log::{error, info};
 use make_uart::make_uart;
@@ -17,10 +18,13 @@ use serialport::FlowControl;
 use tokio::time::sleep;
 
 mod args;
+mod current_version;
 mod direction;
-mod get_current_version;
 mod make_uart;
 mod manifest;
+
+const MAX_RETRIES: usize = 10;
+const RETRY_INTERVAL: Duration = Duration::from_secs(1);
 
 #[tokio::main]
 async fn main() -> ExitCode {
@@ -39,7 +43,10 @@ async fn main() -> ExitCode {
 
     let (mut uart, _callbacks_rx) = make_uart(serial_port, 8, 8, 8);
 
-    let Some(current_version) = uart.get_current_version().await else {
+    let Some(current_version) = uart
+        .await_current_version(RETRY_INTERVAL, MAX_RETRIES)
+        .await
+    else {
         return ExitCode::FAILURE;
     };
 
@@ -60,8 +67,7 @@ async fn main() -> ExitCode {
 
     info!("Active version:   {}", metadata.version());
 
-    let Some(direction) = Direction::from_versions(current_version, metadata.version().clone())
-    else {
+    let Some(direction) = Direction::from_versions(&current_version, metadata.version()) else {
         info!("Firmware is up to date. No action required.");
         return ExitCode::SUCCESS;
     };
@@ -121,7 +127,10 @@ async fn main() -> ExitCode {
     let (mut uart, _callbacks_rx) = make_uart(serial_port, 8, 8, 8);
 
     info!("Validating firmware version.");
-    let Some(new_version) = uart.get_current_version().await else {
+    let Some(new_version) = uart
+        .await_current_version(RETRY_INTERVAL, MAX_RETRIES)
+        .await
+    else {
         return ExitCode::FAILURE;
     };
 
