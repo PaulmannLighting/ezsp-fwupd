@@ -78,9 +78,9 @@ dependencies = [
 
 [[package]]
 name = "ashv2"
-version = "1.1.0"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "750d83d9dd20e882ef5000e8d5e42c30b1999f76ae411ac9c5df5b34d8b82c60"
+checksum = "a5ea74cdf7973dd2b96ab8120e6b8640e54c7cd047cce9e3929307ed04897896"
 dependencies = [
  "bitflags 2.9.1",
  "crc",
