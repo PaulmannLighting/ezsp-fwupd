@@ -1,9 +1,8 @@
 use std::array::TryFromSliceError;
 use std::time::Duration;
 
-use ezsp::ezsp::value::EmberVersion;
-use ezsp::{GetValueExt, uart::Uart};
-use log::error;
+use ezsp::{GetValueExt, ezsp::value::EmberVersion, uart::Uart};
+use log::{debug, error};
 use semver::Version;
 use serialport::SerialPort;
 use tokio::time::sleep;
@@ -48,7 +47,7 @@ where
             match self.get_ember_version().await {
                 Ok(result) => return self.parse_version(result),
                 Err(error) => {
-                    error!("Failed to get version info: {error}");
+                    debug!("Failed to get version info: {error}");
 
                     if let Some(retries) = max_retries.checked_sub(1) {
                         max_retries = retries;
