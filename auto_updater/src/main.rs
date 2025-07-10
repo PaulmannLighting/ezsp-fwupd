@@ -2,6 +2,7 @@
 
 use std::fs::{read, read_to_string};
 use std::io::ErrorKind;
+use std::path::Path;
 use std::process::ExitCode;
 
 use args::Args;
@@ -13,7 +14,7 @@ use ezsp_fwupd::{Fwupd, OtaFile};
 use get_current_version::GetCurrentVersion;
 use le_stream::FromLeStream;
 use log::{error, info};
-use manifest::Manifest;
+use manifest::{Manifest, Metadata};
 use serialport::{FlowControl, SerialPort};
 use tokio::{
     sync::mpsc::{Receiver, channel},
@@ -49,42 +50,27 @@ async fn main() -> ExitCode {
     let serial_port = uart.terminate();
     info!("Current version:  {current_version}");
 
-    let json = match read_to_string(args.manifest()) {
-        Ok(json) => json,
-        Err(error) => {
-            if error.kind() == ErrorKind::NotFound {
-                info!("No manifest file found at '{}'.", args.manifest().display());
-                return ExitCode::SUCCESS;
-            }
-
-            error!(
-                "Failed to read manifest file '{}': {error}",
-                args.manifest().display()
-            );
+    let metadata = match get_metadata(args.manifest()) {
+        Ok(Some(metadata)) => metadata,
+        Ok(None) => {
+            info!("No active firmware version configured.");
+            return ExitCode::SUCCESS;
+        }
+        Err(message) => {
+            error!("{message}");
             return ExitCode::FAILURE;
         }
     };
 
-    let Ok(manifest) = serde_json::from_str::<Manifest>(&json)
-        .inspect_err(|error| error!("Failed to parse manifest file: {error}"))
-    else {
-        return ExitCode::FAILURE;
-    };
+    info!("Active version:   {}", metadata.version());
 
-    let Some(active) = manifest.active() else {
-        info!("No active firmware version found in the manifest.");
-        return ExitCode::SUCCESS;
-    };
-
-    info!("Active version:   {}", active.version());
-
-    let Some(direction) = Direction::from_versions(current_version, active.version().clone())
+    let Some(direction) = Direction::from_versions(current_version, metadata.version().clone())
     else {
         info!("Firmware is up to date. No action required.");
         return ExitCode::SUCCESS;
     };
 
-    let Ok(ota_file) = read(active.filename())
+    let Ok(ota_file) = read(metadata.filename())
         .inspect_err(|error| error!("Failed to read firmware file: {error}"))
     else {
         return ExitCode::FAILURE;
@@ -143,10 +129,10 @@ async fn main() -> ExitCode {
         return ExitCode::FAILURE;
     };
 
-    if new_version != *active.version() {
+    if new_version != *metadata.version() {
         error!(
             "Firmware {direction} failed: expected version {}, got {new_version}",
-            active.version()
+            metadata.version()
         );
         return ExitCode::FAILURE;
     }
@@ -174,4 +160,23 @@ where
         ),
         callbacks_rx,
     )
+}
+
+fn get_metadata(path: &Path) -> Result<Option<Metadata>, String> {
+    match serde_json::from_str::<Manifest>(&match read_to_string(path) {
+        Ok(json) => json,
+        Err(error) => {
+            if error.kind() == ErrorKind::NotFound {
+                return Ok(None);
+            }
+
+            return Err(format!(
+                "Failed to read manifest file '{}': {error}",
+                path.display()
+            ));
+        }
+    }) {
+        Ok(manifest) => Ok(manifest.active()),
+        Err(error) => Err(format!("Failed to parse manifest file: {error}")),
+    }
 }

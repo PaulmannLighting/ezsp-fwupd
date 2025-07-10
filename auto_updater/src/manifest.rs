@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use metadata::Metadata;
+pub use metadata::Metadata;
 
 mod metadata;
 
