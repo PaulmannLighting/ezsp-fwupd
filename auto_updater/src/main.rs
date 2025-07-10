@@ -4,19 +4,19 @@ use std::fs::{read, read_to_string};
 use std::io::ErrorKind;
 use std::process::ExitCode;
 
+use args::Args;
 use ashv2::{BaudRate, open};
 use clap::Parser;
+use direction::Direction;
 use ezsp::{Callback, uart::Uart};
 use ezsp_fwupd::{Fwupd, OtaFile};
+use get_current_version::GetCurrentVersion;
 use le_stream::FromLeStream;
 use log::{error, info};
-use serialport::FlowControl;
-use tokio::{sync::mpsc::channel, time::sleep};
-
-use args::Args;
-use direction::Direction;
-use get_current_version::GetCurrentVersion;
 use manifest::Manifest;
+use serialport::{FlowControl, SerialPort};
+use tokio::sync::mpsc::Receiver;
+use tokio::{sync::mpsc::channel, time::sleep};
 
 mod args;
 mod direction;
@@ -38,8 +38,7 @@ async fn main() -> ExitCode {
         return ExitCode::FAILURE;
     };
 
-    let (callbacks_tx, _callbacks_rx) = channel::<Callback>(8);
-    let mut uart = Uart::new(serial_port, callbacks_tx, 8, 8);
+    let (mut uart, _callbacks_rx) = make_uart(serial_port, 8, 8, 8);
 
     let Some(current_version) = uart.get_current_version().await else {
         return ExitCode::FAILURE;
@@ -135,8 +134,7 @@ async fn main() -> ExitCode {
     );
     sleep(args.reboot_grace_time()).await;
 
-    let (callbacks_tx, _callbacks_rx) = channel::<Callback>(8);
-    let mut uart = Uart::new(serial_port, callbacks_tx, 8, 8);
+    let (mut uart, _callbacks_rx) = make_uart(serial_port, 8, 8, 8);
 
     info!("Validating firmware version.");
     let Some(new_version) = uart.get_current_version().await else {
@@ -153,4 +151,25 @@ async fn main() -> ExitCode {
 
     info!("Firmware {direction} successful. New version: {new_version}");
     ExitCode::SUCCESS
+}
+
+fn make_uart<T>(
+    serial_port: T,
+    callback_channel_size: usize,
+    response_channel_size: usize,
+    protocol_version: u8,
+) -> (Uart<T>, Receiver<Callback>)
+where
+    T: SerialPort + 'static,
+{
+    let (callbacks_tx, callbacks_rx) = channel::<Callback>(callback_channel_size);
+    (
+        Uart::new(
+            serial_port,
+            callbacks_tx,
+            protocol_version,
+            response_channel_size,
+        ),
+        callbacks_rx,
+    )
 }
