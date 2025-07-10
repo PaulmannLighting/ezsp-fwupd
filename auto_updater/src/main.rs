@@ -1,29 +1,25 @@
 //! A firmware auto updater for Zigbee devices using the `ezsp` protocol.
 
-use std::fs::{read, read_to_string};
-use std::io::ErrorKind;
-use std::path::Path;
+use std::fs::read;
 use std::process::ExitCode;
 
 use args::Args;
 use ashv2::{BaudRate, open};
 use clap::Parser;
 use direction::Direction;
-use ezsp::{Callback, uart::Uart};
 use ezsp_fwupd::{Fwupd, OtaFile};
 use get_current_version::GetCurrentVersion;
 use le_stream::FromLeStream;
 use log::{error, info};
-use manifest::{Manifest, Metadata};
-use serialport::{FlowControl, SerialPort};
-use tokio::{
-    sync::mpsc::{Receiver, channel},
-    time::sleep,
-};
+use make_uart::make_uart;
+use manifest::get_metadata;
+use serialport::FlowControl;
+use tokio::time::sleep;
 
 mod args;
 mod direction;
 mod get_current_version;
+mod make_uart;
 mod manifest;
 
 #[tokio::main]
@@ -139,44 +135,4 @@ async fn main() -> ExitCode {
 
     info!("Firmware {direction} successful. New version: {new_version}");
     ExitCode::SUCCESS
-}
-
-fn make_uart<T>(
-    serial_port: T,
-    callback_channel_size: usize,
-    response_channel_size: usize,
-    protocol_version: u8,
-) -> (Uart<T>, Receiver<Callback>)
-where
-    T: SerialPort + 'static,
-{
-    let (callbacks_tx, callbacks_rx) = channel::<Callback>(callback_channel_size);
-    (
-        Uart::new(
-            serial_port,
-            callbacks_tx,
-            protocol_version,
-            response_channel_size,
-        ),
-        callbacks_rx,
-    )
-}
-
-fn get_metadata(path: &Path) -> Result<Option<Metadata>, String> {
-    match serde_json::from_str::<Manifest>(&match read_to_string(path) {
-        Ok(json) => json,
-        Err(error) => {
-            if error.kind() == ErrorKind::NotFound {
-                return Ok(None);
-            }
-
-            return Err(format!(
-                "Failed to read manifest file '{}': {error}",
-                path.display()
-            ));
-        }
-    }) {
-        Ok(manifest) => Ok(manifest.active()),
-        Err(error) => Err(format!("Failed to parse manifest file: {error}")),
-    }
 }
