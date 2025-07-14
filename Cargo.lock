@@ -78,9 +78,9 @@ dependencies = [
 
 [[package]]
 name = "ashv2"
-version = "1.1.2"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51ce410303a1bb775e2e249e3f91c4693b7697f34bea9bd14e0e6626b1bab55e"
+checksum = "fc5c11102c8c7830493185176fa003de1850430a4f793705c8df98c4667c15d9"
 dependencies = [
  "bitflags 2.9.1",
  "crc",
@@ -325,9 +325,9 @@ dependencies = [
 
 [[package]]
 name = "ezsp"
-version = "1.1.2"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "240e118d72212a7178fd4076626229c6836d423e6757683ff7bd83b923a65333"
+checksum = "e8a0c04a1110728ec7023b8ce9cae6f40e3e5bb71ddbb6d52b872a403dcae403"
 dependencies = [
  "ashv2",
  "bitflags 2.9.1",
