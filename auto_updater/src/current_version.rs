@@ -16,7 +16,7 @@ pub trait CurrentVersion {
         max_retries: usize,
     ) -> impl Future<Output = Option<Version>>;
 
-    /// Parses the version information from the device.
+    /// Parse the version information from the device.
     fn parse_version(&self, result: Result<EmberVersion, TryFromSliceError>) -> Option<Version> {
         match result {
             Ok(version_info) => match version_info.try_into() {
