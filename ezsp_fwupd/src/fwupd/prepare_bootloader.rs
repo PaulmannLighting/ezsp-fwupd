@@ -1,4 +1,5 @@
-use ezsp::{Bootloader, Callback, uart::Uart};
+use ezsp::uart::Uart;
+use ezsp::{Bootloader, Callback};
 use log::{debug, error};
 use serialport::SerialPort;
 use tokio::sync::mpsc::channel;

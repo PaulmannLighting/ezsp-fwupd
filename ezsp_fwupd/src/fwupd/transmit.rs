@@ -1,11 +1,12 @@
 use std::time::Duration;
 
-use crate::FlashProgress;
-use crate::xmodem::Send;
 use ashv2::HexSlice;
 use indicatif::ProgressBar;
 use log::{debug, trace};
 use serialport::SerialPort;
+
+use crate::FlashProgress;
+use crate::xmodem::Send;
 
 const INIT_STAGE1: &[u8] = &[0x0A];
 const INIT_STAGE1_RESPONSE_SIZE: usize = 69;

@@ -1,6 +1,7 @@
-use semver::Version;
 use std::cmp::Ordering;
 use std::fmt::Display;
+
+use semver::Version;
 
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Direction {

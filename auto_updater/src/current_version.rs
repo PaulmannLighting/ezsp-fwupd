@@ -1,7 +1,9 @@
 use std::array::TryFromSliceError;
 use std::time::Duration;
 
-use ezsp::{GetValueExt, ezsp::value::EmberVersion, uart::Uart};
+use ezsp::GetValueExt;
+use ezsp::ezsp::value::EmberVersion;
+use ezsp::uart::Uart;
 use log::{debug, error};
 use semver::Version;
 use serialport::SerialPort;

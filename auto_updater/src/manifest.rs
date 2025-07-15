@@ -1,9 +1,9 @@
-use serde::Deserialize;
 use std::fs::read_to_string;
 use std::io::ErrorKind;
 use std::path::Path;
 
 use metadata::Metadata;
+use serde::Deserialize;
 
 mod metadata;
 
