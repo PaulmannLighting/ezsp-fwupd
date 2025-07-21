@@ -11,7 +11,7 @@ bitflags = "2.9"
 crc = "3.3"
 ezsp = { version = "1.2", features = ["ashv2"] }
 indicatif = "0.18"
-le-stream = { version = "2", features = ["derive"] }
+le-stream = { version = "3", features = ["derive"] }
 log = "0.4"
 serialport = "4.7"
 tokio = { version = "1.46", features = ["sync"] }

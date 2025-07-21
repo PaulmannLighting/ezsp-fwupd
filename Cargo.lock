@@ -101,7 +101,7 @@ dependencies = [
  "env_logger",
  "ezsp",
  "ezsp-fwupd",
- "le-stream",
+ "le-stream 3.0.1",
  "log",
  "semver",
  "serde",
@@ -211,7 +211,7 @@ dependencies = [
  "ezsp",
  "ezsp-fwupd",
  "indicatif",
- "le-stream",
+ "le-stream 3.0.1",
  "log",
  "semver",
  "serialport",
@@ -334,7 +334,7 @@ dependencies = [
  "enum-iterator",
  "heapless",
  "itertools",
- "le-stream",
+ "le-stream 2.1.1",
  "log",
  "macaddr",
  "num-derive",
@@ -354,7 +354,7 @@ dependencies = [
  "crc",
  "ezsp",
  "indicatif",
- "le-stream",
+ "le-stream 3.0.1",
  "log",
  "serialport",
  "tokio",
@@ -482,9 +482,9 @@ dependencies = [
 
 [[package]]
 name = "le-stream"
-version = "2.0.0"
+version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a567e19cdd938d99a115594b5195e5bd2447ccbd5c7e7e3576760b4bb2bd8592"
+checksum = "15c37031133f54e89255319c9edc31dd77559a8b5ce9dca1856a98d980ef4a54"
 dependencies = [
  "heapless",
  "le-stream-derive",
@@ -492,10 +492,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "le-stream-derive"
-version = "0.4.2"
+name = "le-stream"
+version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ece287ecb3cf09d6a35c8c623b47f30fc359f8638263efc7ce5951349d3026b"
+checksum = "f0847fc7cc3d2b13cb1c5a785e10b6daf8c67ff2b4f26ccebca17bc37c4d192f"
+dependencies = [
+ "le-stream-derive",
+ "macaddr",
+]
+
+[[package]]
+name = "le-stream-derive"
+version = "0.4.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8caadc2108cf8f8a8a2307ab8869f6d857c7f512b6b022834d95e1e55b1daa23"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -750,9 +760,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.140"
+version = "1.0.141"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20068b6e96dc6c9bd23e01df8827e6c7e1f2fddd43c21810382803c136b99373"
+checksum = "30b9eff21ebe718216c6ec64e1d9ac57087aad11efc64e32002bce4a0d4c03d3"
 dependencies = [
  "itoa",
  "memchr",
@@ -781,12 +791,12 @@ dependencies = [
 
 [[package]]
 name = "silizium"
-version = "1.0.0"
+version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c39a92b0ca76c21f12aa1d033a6a51b8e252f8a6b7d31248529c853d69b09bc"
+checksum = "dc67e6f7388047dd7735200347eb1c141dd9e6f10798e2da1dd041335cd6beeb"
 dependencies = [
  "bitflags 2.9.1",
- "le-stream",
+ "le-stream 3.0.1",
  "macaddr",
  "num-derive",
  "num-traits",
