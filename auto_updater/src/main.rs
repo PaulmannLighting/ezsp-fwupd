@@ -2,7 +2,7 @@
 
 use std::fs::read;
 use std::io;
-use std::process::ExitCode;
+use std::process::{Command, ExitCode};
 use std::time::Duration;
 
 use args::Args;
@@ -83,16 +83,16 @@ async fn main() -> ExitCode {
     .await
     else {
         error!("Firmware update failed.");
-        return ExitCode::FAILURE;
+        return reboot();
     };
 
     let Some(new_version) = validate_firmware(serial_port, metadata.version(), &direction).await
     else {
-        return ExitCode::FAILURE;
+        return reboot();
     };
 
     info!("Firmware {direction} successful. New version: {new_version}");
-    ExitCode::SUCCESS
+    reboot()
 }
 
 /// Get the current firmware version from the Zigbee device.
@@ -210,4 +210,14 @@ where
     }
 
     Some(new_version)
+}
+
+/// Reboot the system.
+fn reboot() -> ExitCode {
+    info!("Rebooting system...");
+    Command::new("reboot")
+        .spawn()
+        .inspect_err(|error| error!("Failed to reboot: {error}"))
+        .map(|()| ExitCode::SUCCESS)
+        .unwrap_or(ExitCode::FAILURE)
 }
