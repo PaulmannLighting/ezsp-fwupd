@@ -1,6 +1,8 @@
 [package]
 name = "cli"
 version = "0.1.0"
+description = "Firmware update utility for EZSP-based Zigbee devices"
+license = "MIT"
 edition = "2024"
 
 [dependencies]

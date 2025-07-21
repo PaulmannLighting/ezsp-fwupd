@@ -1,6 +1,8 @@
 [package]
 name = "ezsp-fwupd"
 version = "1.0.0"
+description = "Firmware update library for EZSP-based Zigbee devices"
+license = "MIT"
 edition = "2024"
 
 [dependencies]
