@@ -93,7 +93,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "auto_updater"
+name = "auto-updater"
 version = "0.1.0"
 dependencies = [
  "ashv2",

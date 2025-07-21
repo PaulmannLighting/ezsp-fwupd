@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["cli", "ezsp_fwupd", "auto_updater"]
+members = ["cli", "ezsp-fwupd", "auto-updater"]
 
 [profile.release]
 opt-level = 3

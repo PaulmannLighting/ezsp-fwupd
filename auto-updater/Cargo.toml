@@ -1,5 +1,5 @@
 [package]
-name = "auto_updater"
+name = "auto-updater"
 version = "0.1.0"
 description = "Firmware auto update utility for EZSP-based Zigbee devices"
 license = "MIT"
@@ -10,7 +10,7 @@ ashv2 = { version = "1.2", features = ["serialport"] }
 clap = { version = "4.5", features = ["derive"] }
 env_logger = "0.11"
 ezsp = { version = "1.2", features = ["semver"] }
-ezsp-fwupd = { path = "../ezsp_fwupd" }
+ezsp-fwupd = { path = "../ezsp-fwupd" }
 le-stream = { version = "3", features = ["derive"] }
 log = "0.4"
 semver = { version = "1.0", features = ["serde"] }
