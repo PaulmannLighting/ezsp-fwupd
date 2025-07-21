@@ -1,6 +1,7 @@
 //! A firmware auto updater for Zigbee devices using the `ezsp` protocol.
 
 use std::fs::read;
+use std::io;
 use std::process::ExitCode;
 use std::time::Duration;
 
@@ -13,8 +14,9 @@ use ezsp_fwupd::{Fwupd, OtaFile};
 use le_stream::FromLeStream;
 use log::{error, info};
 use make_uart::make_uart;
-use manifest::get_metadata;
-use serialport::FlowControl;
+use manifest::{Metadata, get_metadata};
+use semver::Version;
+use serialport::{FlowControl, SerialPort};
 use tokio::time::sleep;
 
 mod args;
@@ -41,17 +43,9 @@ async fn main() -> ExitCode {
         return ExitCode::FAILURE;
     };
 
-    let (mut uart, _callbacks_rx) = make_uart(serial_port, 8, 8, 8);
-
-    let Some(current_version) = uart
-        .await_current_version(RETRY_INTERVAL, MAX_RETRIES)
-        .await
-    else {
+    let Some((serial_port, current_version)) = get_current_version(serial_port).await else {
         return ExitCode::FAILURE;
     };
-
-    let serial_port = uart.terminate();
-    info!("Current version:  {current_version}");
 
     let metadata = match get_metadata(args.manifest()) {
         Ok(Some(metadata)) => metadata,
@@ -72,10 +66,56 @@ async fn main() -> ExitCode {
         return ExitCode::SUCCESS;
     };
 
+    let Some(ota_file) = validate_ota_file(&metadata) else {
+        return ExitCode::FAILURE;
+    };
+
+    let Ok(serial_port) = update_firmware(
+        serial_port,
+        ota_file,
+        direction,
+        args.timeout(),
+        args.reboot_grace_time(),
+    )
+    .await
+    else {
+        error!("Firmware update failed.");
+        return ExitCode::FAILURE;
+    };
+
+    let Some(new_version) = validate_firmware(serial_port, metadata.version(), &direction).await
+    else {
+        return ExitCode::FAILURE;
+    };
+
+    info!("Firmware {direction} successful. New version: {new_version}");
+    ExitCode::SUCCESS
+}
+
+async fn get_current_version<T>(serial_port: T) -> Option<(T, Version)>
+where
+    T: SerialPort + 'static,
+{
+    let (mut uart, _callbacks_rx) = make_uart(serial_port, 8, 8, 8);
+
+    let Some(current_version) = uart
+        .await_current_version(RETRY_INTERVAL, MAX_RETRIES)
+        .await
+    else {
+        error!("Failed to get current firmware version.");
+        return None;
+    };
+
+    let serial_port = uart.terminate();
+    info!("Current version:  {current_version}");
+    Some((serial_port, current_version))
+}
+
+fn validate_ota_file(metadata: &Metadata) -> Option<OtaFile> {
     let Ok(ota_file) = read(metadata.filename())
         .inspect_err(|error| error!("Failed to read firmware file: {error}"))
     else {
-        return ExitCode::FAILURE;
+        return None;
     };
 
     let Ok(ota_file) = OtaFile::from_le_stream_exact(ota_file.into_iter())
@@ -90,7 +130,7 @@ async fn main() -> ExitCode {
                 .map_err(drop)
         })
     else {
-        return ExitCode::FAILURE;
+        return None;
     };
 
     let header = ota_file.header();
@@ -100,30 +140,42 @@ async fn main() -> ExitCode {
     info!("OTA Zigbee stack: {}", header.zigbee_stack_version());
     info!("OTA manufacturer: {}", header.manufacturer_id());
     info!("OTA image size:   {}", header.image_size());
+    Some(ota_file)
+}
 
+async fn update_firmware<T>(
+    serial_port: T,
+    ota_file: OtaFile,
+    direction: Direction,
+    timeout: Duration,
+    reboot_grace_time: Duration,
+) -> io::Result<T>
+where
+    T: SerialPort + 'static,
+{
     info!("{} firmware...", direction.present_participle());
-    let serial_port = match serial_port
-        .fwupd(
-            ota_file.payload().to_vec(),
-            Some(args.timeout()),
-            false,
-            None,
-        )
+    let serial_port = serial_port
+        .fwupd(ota_file.payload().to_vec(), Some(timeout), false, None)
         .await
-    {
-        Ok(serial_port) => serial_port,
-        Err(error) => {
+        .inspect_err(|error| {
             error!("Firmware {direction} failed: {error}");
-            return ExitCode::FAILURE;
-        }
-    };
-
+        })?;
     info!(
         "Firmware {direction} complete, waiting {}s for device to reboot...",
-        args.reboot_grace_time().as_secs_f32()
+        reboot_grace_time.as_secs_f32()
     );
-    sleep(args.reboot_grace_time()).await;
+    sleep(reboot_grace_time).await;
+    Ok(serial_port)
+}
 
+async fn validate_firmware<T>(
+    serial_port: T,
+    version: &Version,
+    direction: &Direction,
+) -> Option<Version>
+where
+    T: SerialPort + 'static,
+{
     let (mut uart, _callbacks_rx) = make_uart(serial_port, 8, 8, 8);
 
     info!("Validating firmware version.");
@@ -131,17 +183,14 @@ async fn main() -> ExitCode {
         .await_current_version(RETRY_INTERVAL, MAX_RETRIES)
         .await
     else {
-        return ExitCode::FAILURE;
+        error!("Failed to get new firmware version after update.");
+        return None;
     };
 
-    if new_version != *metadata.version() {
-        error!(
-            "Firmware {direction} failed: expected version {}, got {new_version}",
-            metadata.version()
-        );
-        return ExitCode::FAILURE;
+    if new_version != *version {
+        error!("Firmware {direction} failed: expected version {version}, got {new_version}",);
+        return None;
     }
 
-    info!("Firmware {direction} successful. New version: {new_version}");
-    ExitCode::SUCCESS
+    Some(new_version)
 }
