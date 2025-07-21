@@ -25,6 +25,9 @@ mod direction;
 mod make_uart;
 mod manifest;
 
+const CALLBACK_CHANNEL_SIZE: usize = 8;
+const RESPONSE_CHANNEL_SIZE: usize = 8;
+const PROTOCOL_VERSION: u8 = 8;
 const MAX_RETRIES: usize = 10;
 const RETRY_INTERVAL: Duration = Duration::from_secs(1);
 
@@ -97,7 +100,12 @@ async fn get_current_version<T>(serial_port: T) -> Option<(T, Version)>
 where
     T: SerialPort + 'static,
 {
-    let (mut uart, _callbacks_rx) = make_uart(serial_port, 8, 8, 8);
+    let (mut uart, _callbacks_rx) = make_uart(
+        serial_port,
+        CALLBACK_CHANNEL_SIZE,
+        RESPONSE_CHANNEL_SIZE,
+        PROTOCOL_VERSION,
+    );
 
     let Some(current_version) = uart
         .await_current_version(RETRY_INTERVAL, MAX_RETRIES)
@@ -180,7 +188,12 @@ async fn validate_firmware<T>(
 where
     T: SerialPort + 'static,
 {
-    let (mut uart, _callbacks_rx) = make_uart(serial_port, 8, 8, 8);
+    let (mut uart, _callbacks_rx) = make_uart(
+        serial_port,
+        CALLBACK_CHANNEL_SIZE,
+        RESPONSE_CHANNEL_SIZE,
+        PROTOCOL_VERSION,
+    );
 
     info!("Validating firmware version.");
     let Some(new_version) = uart
