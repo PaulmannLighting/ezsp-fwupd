@@ -92,6 +92,7 @@ async fn main() -> ExitCode {
     ExitCode::SUCCESS
 }
 
+/// Get the current firmware version from the Zigbee device.
 async fn get_current_version<T>(serial_port: T) -> Option<(T, Version)>
 where
     T: SerialPort + 'static,
@@ -111,6 +112,7 @@ where
     Some((serial_port, current_version))
 }
 
+/// Validate the OTA file by reading it and checking its contents.
 fn validate_ota_file(metadata: &Metadata) -> Option<OtaFile> {
     let Ok(ota_file) = read(metadata.filename())
         .inspect_err(|error| error!("Failed to read firmware file: {error}"))
@@ -143,6 +145,7 @@ fn validate_ota_file(metadata: &Metadata) -> Option<OtaFile> {
     Some(ota_file)
 }
 
+/// Update the firmware of the Zigbee device.
 async fn update_firmware<T>(
     serial_port: T,
     ota_file: OtaFile,
@@ -168,6 +171,7 @@ where
     Ok(serial_port)
 }
 
+/// Validate the firmware version after the update.
 async fn validate_firmware<T>(
     serial_port: T,
     version: &Version,
