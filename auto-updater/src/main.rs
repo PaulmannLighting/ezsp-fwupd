@@ -217,7 +217,14 @@ fn reboot() -> ExitCode {
     info!("Rebooting system...");
     Command::new("reboot")
         .spawn()
+        .and_then(|mut child| child.wait())
         .inspect_err(|error| error!("Failed to reboot: {error}"))
-        .map(|()| ExitCode::SUCCESS)
+        .map(|status| {
+            if status.success() {
+                ExitCode::SUCCESS
+            } else {
+                ExitCode::FAILURE
+            }
+        })
         .unwrap_or(ExitCode::FAILURE)
 }
