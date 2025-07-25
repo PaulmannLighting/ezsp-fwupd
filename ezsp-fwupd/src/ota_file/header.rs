@@ -81,7 +81,7 @@ impl Header {
 
     /// Parse the tags from the OTA file.
     #[must_use]
-    pub fn tags<T>(&self, mut bytes: T) -> Vec<Tag>
+    pub(crate) fn parse_tags<T>(&self, mut bytes: T) -> Vec<Tag>
     where
         T: Iterator<Item = u8>,
     {

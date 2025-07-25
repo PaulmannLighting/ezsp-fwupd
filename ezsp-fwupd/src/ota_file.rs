@@ -139,7 +139,7 @@ impl FromLeStream for OtaFile {
             None
         };
 
-        let tags = header.tags(&mut bytes);
+        let tags = header.parse_tags(&mut bytes);
         let payload = bytes.collect::<Vec<_>>();
 
         Some(Self {
