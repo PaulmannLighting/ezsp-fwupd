@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Firmware auto update utility for EZSP-based Zigbee devices"
 license = "MIT"
 edition = "2024"
+publish = false
 
 [dependencies]
 ashv2 = { version = "1.2", features = ["serialport"] }

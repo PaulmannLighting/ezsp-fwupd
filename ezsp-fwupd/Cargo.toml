@@ -4,6 +4,7 @@ version = "1.0.0"
 description = "Firmware update library for EZSP-based Zigbee devices"
 license = "MIT"
 edition = "2024"
+publish = false
 
 [dependencies]
 ashv2 = "1.2"
