@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use field_control::FieldControl;
 use le_stream::FromLeStream;
 use le_stream::derive::FromLeStream;
@@ -96,5 +98,15 @@ impl Header {
         }
 
         tags
+    }
+}
+
+impl Display for Header {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "Version:         {}", self.firmware_version())?;
+        writeln!(f, "Name:            {}", self.name())?;
+        writeln!(f, "Type:            {}", self.image_type())?;
+        writeln!(f, "Manufacturer:    {}", self.manufacturer_id())?;
+        write!(f, "Size:            {}", self.image_size())
     }
 }
