@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use ashv2::{BaudRate, open};
 use clap::Parser;
-use ezsp_fwupd::{Fwupd, OtaFile};
+use ezsp_fwupd::{Fwupd, OtaFile, Reset};
 use le_stream::FromLeStream;
 use log::{error, info};
 use semver::Version;
@@ -113,6 +113,11 @@ where
         .await
     else {
         error!("Failed to get current firmware version.");
+
+        if let Err(error) = uart.terminate().reset(Some(RETRY_INTERVAL)) {
+            error!("Failed to reset device: {error}");
+        }
+
         return None;
     };
 
@@ -202,6 +207,11 @@ where
         .await
     else {
         error!("Failed to get new firmware version after update.");
+
+        if let Err(error) = uart.terminate().reset(Some(RETRY_INTERVAL)) {
+            error!("Failed to reset device: {error}");
+        }
+
         return None;
     };
 
