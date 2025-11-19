@@ -82,22 +82,17 @@ async fn main() -> ExitCode {
     )
     .await
     {
-        Ok(serial_port) => {
-            if let Some(new_version) =
-                validate_firmware(serial_port, metadata.version(), &direction).await
-            {
+        Ok(serial_port) => validate_firmware(serial_port, metadata.version(), &direction)
+            .await
+            .map_or(ExitCode::FAILURE, |new_version| {
                 info!("Firmware {direction} successful. New version: {new_version}");
-            }
-        }
+                ExitCode::SUCCESS
+            }),
         Err(error) => {
             error!("Firmware update failed: {error}");
-            // If the firmware update fails, we don't reboot the system
-            // to prevent an endless reboot cycle.
-            return ExitCode::FAILURE;
+            ExitCode::FAILURE
         }
     }
-
-    reboot()
 }
 
 /// Get the current firmware version from the Zigbee device.
@@ -215,21 +210,4 @@ where
     }
 
     Some(new_version)
-}
-
-/// Reboot the system.
-fn reboot() -> ExitCode {
-    info!("Rebooting system...");
-    Command::new("reboot")
-        .spawn()
-        .and_then(|mut child| child.wait())
-        .inspect_err(|error| error!("Failed to reboot: {error}"))
-        .map(|status| {
-            if status.success() {
-                ExitCode::SUCCESS
-            } else {
-                ExitCode::FAILURE
-            }
-        })
-        .unwrap_or(ExitCode::FAILURE)
 }
