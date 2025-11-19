@@ -91,6 +91,9 @@ async fn main() -> ExitCode {
         }
         Err(error) => {
             error!("Firmware update failed: {error}");
+            // If the firmware update fails, we don't reboot the system
+            // to prevent an endless reboot cycle.
+            return ExitCode::FAILURE;
         }
     }
 
