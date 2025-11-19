@@ -5,19 +5,20 @@ use std::io;
 use std::process::ExitCode;
 use std::time::Duration;
 
-use args::Args;
 use ashv2::{BaudRate, open};
 use clap::Parser;
-use current_version::CurrentVersion;
-use direction::Direction;
 use ezsp_fwupd::{Fwupd, OtaFile};
 use le_stream::FromLeStream;
 use log::{error, info};
-use make_uart::make_uart;
-use manifest::{Metadata, get_metadata};
 use semver::Version;
 use serialport::{FlowControl, SerialPort};
 use tokio::time::sleep;
+
+use self::args::Args;
+use self::current_version::CurrentVersion;
+use self::direction::Direction;
+use self::make_uart::make_uart;
+use self::manifest::{Metadata, get_metadata};
 
 mod args;
 mod current_version;

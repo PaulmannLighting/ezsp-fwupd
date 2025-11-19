@@ -1,10 +1,11 @@
 use std::fmt::Display;
 
 use ezsp::ember::Eui64;
-use header::Header;
 use le_stream::FromLeStream;
-use tag::Tag;
-use upgrade_file_destination::UpgradeFileDestination;
+
+use self::header::Header;
+use self::tag::Tag;
+use self::upgrade_file_destination::UpgradeFileDestination;
 
 const MAGIC: [u8; 4] = [0x1E, 0xF1, 0xEE, 0x0B];
 const HEADER_VERSION_ZIGBEE: u16 = 0x0100;

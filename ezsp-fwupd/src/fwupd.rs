@@ -2,11 +2,11 @@ use std::time::Duration;
 
 use indicatif::ProgressBar;
 use log::{debug, info};
-use prepare_bootloader::PrepareBootloader;
-pub use reset::Reset;
 use serialport::SerialPort;
-use transmit::Transmit;
 
+use self::prepare_bootloader::PrepareBootloader;
+pub use self::reset::Reset;
+use self::transmit::Transmit;
 pub use crate::xmodem::FrameCount;
 use crate::{ClearBuffer, FlashProgress};
 

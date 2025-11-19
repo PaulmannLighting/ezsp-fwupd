@@ -1,7 +1,7 @@
 use indicatif::ProgressBar;
 use log::debug;
-use send_frame::SendFrame;
 
+use self::send_frame::SendFrame;
 use super::frame::EOT;
 use super::frames::Frames;
 use crate::{FlashProgress, IgnoreTimeout};

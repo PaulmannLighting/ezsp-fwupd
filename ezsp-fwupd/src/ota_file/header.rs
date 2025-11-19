@@ -1,9 +1,9 @@
 use std::fmt::Display;
 
-use field_control::FieldControl;
 use le_stream::FromLeStream;
 use le_stream::derive::FromLeStream;
 
+use self::field_control::FieldControl;
 use super::tag::Tag;
 
 const HEADER_STRING_LENGTH: usize = 32;
