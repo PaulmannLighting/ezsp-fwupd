@@ -29,7 +29,7 @@ mod manifest;
 const CALLBACK_CHANNEL_SIZE: usize = 8;
 const RESPONSE_CHANNEL_SIZE: usize = 8;
 const PROTOCOL_VERSION: u8 = 8;
-const MAX_RETRIES: usize = 10;
+const MAX_RETRIES: usize = 5;
 const RETRY_INTERVAL: Duration = Duration::from_secs(1);
 
 #[tokio::main]
