@@ -2,7 +2,7 @@
 
 use std::fs::read;
 use std::io;
-use std::process::{Command, ExitCode};
+use std::process::ExitCode;
 use std::time::Duration;
 
 use args::Args;
