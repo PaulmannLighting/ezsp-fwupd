@@ -73,7 +73,7 @@ async fn main() -> ExitCode {
         return ExitCode::FAILURE;
     };
 
-    let Ok(serial_port) = update_firmware(
+    match update_firmware(
         serial_port,
         ota_file,
         direction,
@@ -81,17 +81,19 @@ async fn main() -> ExitCode {
         args.reboot_grace_time(),
     )
     .await
-    else {
-        error!("Firmware update failed.");
-        return reboot();
-    };
+    {
+        Ok(serial_port) => {
+            if let Some(new_version) =
+                validate_firmware(serial_port, metadata.version(), &direction).await
+            {
+                info!("Firmware {direction} successful. New version: {new_version}");
+            }
+        }
+        Err(error) => {
+            error!("Firmware update failed: {error}");
+        }
+    }
 
-    let Some(new_version) = validate_firmware(serial_port, metadata.version(), &direction).await
-    else {
-        return reboot();
-    };
-
-    info!("Firmware {direction} successful. New version: {new_version}");
     reboot()
 }
 
