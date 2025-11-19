@@ -15,20 +15,21 @@ use serialport::{FlowControl, SerialPort};
 use tokio::time::sleep;
 
 use self::args::Args;
+use self::current_version::CurrentVersion;
 use self::direction::Direction;
+use self::make_uart::make_uart;
 use self::manifest::{Metadata, get_metadata};
-use self::resettable_uart::ResettableUart;
 
 mod args;
+mod current_version;
 mod direction;
 mod make_uart;
 mod manifest;
-mod resettable_uart;
 
 const CALLBACK_CHANNEL_SIZE: usize = 8;
 const RESPONSE_CHANNEL_SIZE: usize = 8;
 const PROTOCOL_VERSION: u8 = 8;
-const MAX_RETRIES: usize = 5;
+const MAX_RETRIES: usize = 10;
 const RETRY_INTERVAL: Duration = Duration::from_secs(1);
 
 #[tokio::main]
@@ -100,14 +101,14 @@ async fn get_current_version<T>(serial_port: T) -> Option<(T, Version)>
 where
     T: SerialPort + 'static,
 {
-    let mut resettable_uart = ResettableUart::new(
+    let (mut uart, _callbacks_rx) = make_uart(
         serial_port,
         CALLBACK_CHANNEL_SIZE,
         RESPONSE_CHANNEL_SIZE,
         PROTOCOL_VERSION,
     );
 
-    let Some((current_version, uart)) = resettable_uart
+    let Some(current_version) = uart
         .await_current_version(RETRY_INTERVAL, MAX_RETRIES)
         .await
     else {
@@ -188,7 +189,7 @@ async fn validate_firmware<T>(
 where
     T: SerialPort + 'static,
 {
-    let mut resettable_uart = ResettableUart::new(
+    let (mut uart, _callbacks_rx) = make_uart(
         serial_port,
         CALLBACK_CHANNEL_SIZE,
         RESPONSE_CHANNEL_SIZE,
@@ -196,7 +197,7 @@ where
     );
 
     info!("Validating firmware version.");
-    let Some((new_version, _)) = resettable_uart
+    let Some(new_version) = uart
         .await_current_version(RETRY_INTERVAL, MAX_RETRIES)
         .await
     else {
