@@ -4,6 +4,8 @@ use log::{debug, error};
 use serialport::SerialPort;
 use tokio::sync::mpsc::channel;
 
+use crate::discard_callbacks;
+
 const MODE: u8 = 0x00;
 
 /// Trait for preparing the bootloader for firmware updates.
@@ -21,7 +23,8 @@ where
     T: SerialPort + 'static,
 {
     async fn prepare_bootloader(self) -> Self {
-        let (callbacks_tx, _callbacks_rx) = channel::<Callback>(8);
+        let (callbacks_tx, callbacks_rx) = channel::<Callback>(8);
+        discard_callbacks(callbacks_rx);
         let mut uart = Uart::new(self, callbacks_tx, 8, 8);
 
         debug!("Launching standalone bootloader...");

@@ -9,7 +9,7 @@ use ashv2::{BaudRate, open};
 use clap::{Parser, Subcommand};
 use ezsp::uart::Uart;
 use ezsp::{Callback, GetValueExt};
-use ezsp_fwupd::{FrameCount, Fwupd, OtaFile, Reset};
+use ezsp_fwupd::{FrameCount, Fwupd, OtaFile, Reset, discard_callbacks};
 use indicatif::{ProgressBar, ProgressStyle};
 use le_stream::FromLeStream;
 use log::error;
@@ -141,7 +141,8 @@ async fn query(tty: &str) -> ExitCode {
         return ExitCode::FAILURE;
     };
 
-    let (callbacks_tx, _callbacks_rx) = channel::<Callback>(8);
+    let (callbacks_tx, callbacks_rx) = channel::<Callback>(8);
+    discard_callbacks(callbacks_rx);
     let mut uart = Uart::new(serial_port, callbacks_tx, 8, 8);
 
     match uart.get_ember_version().await {

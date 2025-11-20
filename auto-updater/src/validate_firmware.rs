@@ -22,7 +22,7 @@ pub async fn validate_firmware<T>(
 where
     T: SerialPort + 'static,
 {
-    let (mut uart, _callbacks_rx) = make_uart(
+    let mut uart = make_uart(
         serial_port,
         uart_params.callback_channel_size(),
         uart_params.response_channel_size(),
