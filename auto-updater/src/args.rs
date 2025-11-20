@@ -3,6 +3,8 @@ use std::time::Duration;
 
 use clap::Parser;
 
+use crate::uart_params::UartParams;
+
 const DEFAULT_MANIFEST: &str = "/etc/ezsp-firmware-update.json";
 const DEFAULT_TIMEOUT: u64 = 1000; // Milliseconds
 const DEFAULT_REBOOT_GRACE_TIME: u64 = 4000; // Milliseconds
@@ -56,22 +58,14 @@ impl Args {
         Duration::from_millis(self.reboot_grace_time)
     }
 
-    /// Return the callback channel size.
+    /// Return the UART parameters.
     #[must_use]
-    pub const fn callback_channel_size(&self) -> usize {
-        self.callback_channel_size
-    }
-
-    /// Return the response channel size.
-    #[must_use]
-    pub const fn response_channel_size(&self) -> usize {
-        self.response_channel_size
-    }
-
-    /// Return the EZSP protocol version to use.
-    #[must_use]
-    pub const fn protocol_version(&self) -> u8 {
-        self.protocol_version
+    pub const fn uart_params(&self) -> UartParams {
+        UartParams::new(
+            self.callback_channel_size,
+            self.response_channel_size,
+            self.protocol_version,
+        )
     }
 
     /// Return the maximum amount of retries on repeatable fallible operations.

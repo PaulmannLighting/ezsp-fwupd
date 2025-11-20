@@ -8,13 +8,12 @@ use serialport::SerialPort;
 use crate::current_version::CurrentVersion;
 use crate::direction::Direction;
 use crate::make_uart::make_uart;
+use crate::uart_params::UartParams;
 
 /// Validate the firmware version after the update.
 pub async fn validate_firmware<T>(
     serial_port: T,
-    callback_channel_size: usize,
-    response_channel_size: usize,
-    protocol_version: u8,
+    uart_params: &UartParams,
     retry_interval: Duration,
     max_retries: u8,
     version: &Version,
@@ -25,9 +24,9 @@ where
 {
     let (mut uart, _callbacks_rx) = make_uart(
         serial_port,
-        callback_channel_size,
-        response_channel_size,
-        protocol_version,
+        uart_params.callback_channel_size(),
+        uart_params.response_channel_size(),
+        uart_params.protocol_version(),
     );
 
     info!("Validating firmware version.");

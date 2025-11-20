@@ -20,6 +20,7 @@ mod current_version;
 mod direction;
 mod make_uart;
 mod manifest;
+mod uart_params;
 mod update_firmware;
 mod validate_firmware;
 mod validate_ota_file;
@@ -55,13 +56,8 @@ async fn main() -> ExitCode {
         return ExitCode::FAILURE;
     };
 
-    let (current_version, serial_port) = get_current_version(
-        serial_port,
-        args.callback_channel_size(),
-        args.response_channel_size(),
-        args.protocol_version(),
-    )
-    .await;
+    let (current_version, serial_port) =
+        get_current_version(serial_port, &args.uart_params()).await;
 
     if let Some(current_version) = &current_version {
         info!("Current version:  {current_version}");
@@ -88,9 +84,7 @@ async fn main() -> ExitCode {
     {
         Ok(serial_port) => validate_firmware(
             serial_port,
-            args.callback_channel_size(),
-            args.response_channel_size(),
-            args.protocol_version(),
+            &args.uart_params(),
             args.timeout(),
             args.max_retries(),
             metadata.version(),
