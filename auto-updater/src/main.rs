@@ -65,18 +65,16 @@ async fn main() -> ExitCode {
 
     let (current_version, serial_port) = get_current_version(serial_port).await;
 
-    let direction = if let Some(current_version) = current_version {
+    if let Some(current_version) = &current_version {
         info!("Current version:  {current_version}");
-
-        let Some(direction) = Direction::from_versions(&current_version, metadata.version()) else {
-            info!("Firmware is up to date. No action required.");
-            return ExitCode::SUCCESS;
-        };
-
-        direction
     } else {
         error!("Failed to get current firmware version.");
-        Direction::Unknown
+    }
+
+    let Some(direction) = Direction::from_versions(current_version.as_ref(), metadata.version())
+    else {
+        info!("Firmware is up to date. No action required.");
+        return ExitCode::SUCCESS;
     };
 
     info!("Active version:   {}", metadata.version());

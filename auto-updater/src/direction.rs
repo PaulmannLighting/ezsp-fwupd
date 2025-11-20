@@ -13,7 +13,11 @@ pub enum Direction {
 impl Direction {
     /// Parses the direction from two versions.
     #[must_use]
-    pub fn from_versions(current: &Version, new: &Version) -> Option<Self> {
+    pub fn from_versions(current: Option<&Version>, new: &Version) -> Option<Self> {
+        let Some(current) = current else {
+            return Some(Self::Unknown);
+        };
+
         match current.cmp(new) {
             Ordering::Less => Some(Self::Upgrade),
             Ordering::Greater => Some(Self::Downgrade),
