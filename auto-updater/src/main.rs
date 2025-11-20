@@ -63,16 +63,23 @@ async fn main() -> ExitCode {
         return ExitCode::FAILURE;
     };
 
-    let Some((serial_port, current_version)) = get_current_version(serial_port).await else {
-        return ExitCode::FAILURE;
+    let (current_version, serial_port) = get_current_version(serial_port).await;
+
+    let direction = if let Some(current_version) = current_version {
+        info!("Current version:  {current_version}");
+
+        let Some(direction) = Direction::from_versions(&current_version, metadata.version()) else {
+            info!("Firmware is up to date. No action required.");
+            return ExitCode::SUCCESS;
+        };
+
+        direction
+    } else {
+        error!("Failed to get current firmware version.");
+        Direction::Unknown
     };
 
     info!("Active version:   {}", metadata.version());
-
-    let Some(direction) = Direction::from_versions(&current_version, metadata.version()) else {
-        info!("Firmware is up to date. No action required.");
-        return ExitCode::SUCCESS;
-    };
 
     match update_firmware(
         serial_port,
@@ -97,7 +104,7 @@ async fn main() -> ExitCode {
 }
 
 /// Get the current firmware version from the Zigbee device.
-async fn get_current_version<T>(serial_port: T) -> Option<(T, Version)>
+async fn get_current_version<T>(serial_port: T) -> (Option<Version>, T)
 where
     T: SerialPort + 'static,
 {
@@ -112,18 +119,11 @@ where
         .await_current_version(RETRY_INTERVAL, MAX_RETRIES)
         .await
     else {
-        error!("Failed to get current firmware version.");
-
-        if let Err(error) = uart.terminate().reset(Some(RETRY_INTERVAL)) {
-            error!("Failed to reset device: {error}");
-        }
-
-        return None;
+        return (None, uart.terminate());
     };
 
     let serial_port = uart.terminate();
-    info!("Current version:  {current_version}");
-    Some((serial_port, current_version))
+    (Some(current_version), serial_port)
 }
 
 /// Validate the OTA file by reading it and checking its contents.

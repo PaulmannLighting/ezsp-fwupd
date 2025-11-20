@@ -7,6 +7,7 @@ use semver::Version;
 pub enum Direction {
     Upgrade,
     Downgrade,
+    Unknown,
 }
 
 impl Direction {
@@ -26,6 +27,7 @@ impl Direction {
         match self {
             Self::Upgrade => "Upgrading",
             Self::Downgrade => "Downgrading",
+            Self::Unknown => "Flashing",
         }
     }
 }
@@ -35,6 +37,7 @@ impl Display for Direction {
         match self {
             Self::Upgrade => write!(f, "upgrade"),
             Self::Downgrade => write!(f, "downgrade"),
+            Self::Unknown => write!(f, "flashing"),
         }
     }
 }
