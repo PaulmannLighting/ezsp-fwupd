@@ -172,7 +172,7 @@ where
 {
     info!("{} firmware...", direction.present_participle());
     let serial_port = serial_port
-        .fwupd(ota_file.payload().to_vec(), Some(timeout), false, None)
+        .fwupd(ota_file.payload().to_vec(), Some(timeout), None)
         .await
         .inspect_err(|error| {
             error!("Firmware {direction} failed: {error}");
@@ -234,7 +234,7 @@ async fn rescue(tty: &str, ota_file: &OtaFile) -> ExitCode {
 
     if let Err(error) = serial_port
         // Do not prepare the device, since it's most likely stuck in the bootloader state already.
-        .fwupd(ota_file.payload().to_vec(), None, true, None)
+        .fwupd(ota_file.payload().to_vec(), None, None)
         .await
         .map(drop)
     {

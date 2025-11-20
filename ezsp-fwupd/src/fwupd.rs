@@ -21,7 +21,6 @@ pub trait Fwupd: Sized {
         self,
         firmware: Vec<u8>,
         timeout: Option<Duration>,
-        no_prepare: bool,
         progress_bar: Option<&ProgressBar>,
     ) -> impl Future<Output = std::io::Result<Self>>;
 }
@@ -34,13 +33,10 @@ where
         mut self,
         firmware: Vec<u8>,
         timeout: Option<Duration>,
-        no_prepare: bool,
         progress_bar: Option<&ProgressBar>,
     ) -> std::io::Result<Self> {
-        if !no_prepare {
-            info!("Preparing bootloader...");
-            self = self.prepare_bootloader().await?;
-        }
+        info!("Preparing bootloader...");
+        self = self.prepare_bootloader().await;
 
         let original_timeout = self.timeout();
 

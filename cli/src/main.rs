@@ -35,8 +35,6 @@ enum Action {
         firmware: PathBuf,
         #[clap(long, short, help = "serial port timeout in milliseconds", default_value_t = DEFAULT_TIMEOUT)]
         timeout: u64,
-        #[clap(long, short, help = "offset in bytes to skip in the firmware file")]
-        no_prepare: bool,
     },
     #[clap(name = "reset", about = "Reset the device")]
     Reset {
@@ -69,8 +67,7 @@ async fn main() -> ExitCode {
             tty,
             ref firmware,
             timeout,
-            no_prepare,
-        } => flash(tty, firmware, Duration::from_millis(timeout), no_prepare).await,
+        } => flash(tty, firmware, Duration::from_millis(timeout)).await,
         Action::Reset { ref tty, timeout } => reset(tty, timeout.map(Duration::from_millis)),
         Action::Query { ref tty } => query(tty).await,
         Action::Ota {
@@ -81,7 +78,7 @@ async fn main() -> ExitCode {
 }
 
 /// Flash the firmware onto the device.
-async fn flash(tty: String, firmware: &Path, timeout: Duration, no_prepare: bool) -> ExitCode {
+async fn flash(tty: String, firmware: &Path, timeout: Duration) -> ExitCode {
     let firmware: Vec<u8> = read(firmware).expect("Failed to read firmware file");
     let ota_file = OtaFile::from_le_stream_exact(firmware.into_iter())
         .expect("Failed to read ota file")
@@ -106,7 +103,7 @@ async fn flash(tty: String, firmware: &Path, timeout: Duration, no_prepare: bool
     };
 
     let result = serial_port
-        .fwupd(firmware, Some(timeout), no_prepare, Some(&progress_bar))
+        .fwupd(firmware, Some(timeout), Some(&progress_bar))
         .await
         .map(drop);
 
