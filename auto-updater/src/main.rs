@@ -9,7 +9,7 @@ use ashv2::{BaudRate, open};
 use clap::Parser;
 use ezsp_fwupd::{Fwupd, OtaFile, Reset};
 use le_stream::FromLeStream;
-use log::{error, info};
+use log::{error, info, warn};
 use semver::Version;
 use serialport::{FlowControl, SerialPort};
 use tokio::time::sleep;
@@ -76,7 +76,7 @@ async fn main() -> ExitCode {
 
     match update_firmware(
         serial_port,
-        ota_file,
+        &ota_file,
         direction,
         args.timeout(),
         args.reboot_grace_time(),
@@ -91,7 +91,7 @@ async fn main() -> ExitCode {
             }),
         Err(error) => {
             error!("Firmware update failed: {error}");
-            ExitCode::FAILURE
+            rescue(args.tty(), &ota_file).await
         }
     }
 }
@@ -162,7 +162,7 @@ fn validate_ota_file(metadata: &Metadata) -> Option<OtaFile> {
 /// Update the firmware of the Zigbee device.
 async fn update_firmware<T>(
     serial_port: T,
-    ota_file: OtaFile,
+    ota_file: &OtaFile,
     direction: Direction,
     timeout: Duration,
     reboot_grace_time: Duration,
@@ -221,4 +221,27 @@ where
     }
 
     Some(new_version)
+}
+
+async fn rescue(tty: &str, ota_file: &OtaFile) -> ExitCode {
+    warn!("Attempting to rescue device by re-flashing firmware...");
+
+    let Ok(serial_port) = open(tty.to_string(), BaudRate::RstCts, FlowControl::Software)
+        .inspect_err(|error| error!("Failed to open serial port '{tty}': {error}"))
+    else {
+        return ExitCode::FAILURE;
+    };
+
+    if let Err(error) = serial_port
+        // Do not prepare the device, since it's most likely stuck in the bootloader state already.
+        .fwupd(ota_file.payload().to_vec(), None, true, None)
+        .await
+        .map(drop)
+    {
+        error!("Rescue firmware update failed: {error}");
+        return ExitCode::FAILURE;
+    }
+
+    info!("Rescue firmware update successful.");
+    ExitCode::SUCCESS
 }
