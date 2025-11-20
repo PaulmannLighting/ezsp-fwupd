@@ -50,6 +50,10 @@ async fn main() -> ExitCode {
         }
     };
 
+    let Some(ota_file) = validate_ota_file(&metadata) else {
+        return ExitCode::FAILURE;
+    };
+
     let Ok(serial_port) = open(
         args.tty().to_string(),
         BaudRate::RstCts,
@@ -68,10 +72,6 @@ async fn main() -> ExitCode {
     let Some(direction) = Direction::from_versions(&current_version, metadata.version()) else {
         info!("Firmware is up to date. No action required.");
         return ExitCode::SUCCESS;
-    };
-
-    let Some(ota_file) = validate_ota_file(&metadata) else {
-        return ExitCode::FAILURE;
     };
 
     match update_firmware(
