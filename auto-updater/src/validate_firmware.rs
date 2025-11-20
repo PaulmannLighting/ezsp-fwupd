@@ -4,7 +4,7 @@ use semver::Version;
 use serialport::SerialPort;
 
 use crate::constants::{
-    CALLBACK_CHANNEL_SIZE, MAX_RETRIES, PROTOCOL_VERSION, RESPONSE_CHANNEL_SIZE, RETRY_INTERVAL,
+    CALLBACK_CHANNEL_SIZE, PROTOCOL_VERSION, RESPONSE_CHANNEL_SIZE, RETRY_INTERVAL,
 };
 use crate::current_version::CurrentVersion;
 use crate::direction::Direction;
@@ -27,10 +27,7 @@ where
     );
 
     info!("Validating firmware version.");
-    let Some(new_version) = uart
-        .await_current_version(RETRY_INTERVAL, MAX_RETRIES)
-        .await
-    else {
+    let Some(new_version) = uart.get_current_version().await else {
         error!("Failed to get new firmware version after update.");
 
         if let Err(error) = uart.terminate().reset(Some(RETRY_INTERVAL)) {

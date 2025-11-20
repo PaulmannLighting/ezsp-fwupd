@@ -1,5 +1,4 @@
 use std::array::TryFromSliceError;
-use std::time::Duration;
 
 use ezsp::GetValueExt;
 use ezsp::ezsp::value::EmberVersion;
@@ -7,21 +6,14 @@ use ezsp::uart::Uart;
 use log::{debug, error};
 use semver::Version;
 use serialport::SerialPort;
-use tokio::time::sleep;
 
-use crate::constants::{
-    CALLBACK_CHANNEL_SIZE, MAX_RETRIES, PROTOCOL_VERSION, RESPONSE_CHANNEL_SIZE, RETRY_INTERVAL,
-};
+use crate::constants::{CALLBACK_CHANNEL_SIZE, PROTOCOL_VERSION, RESPONSE_CHANNEL_SIZE};
 use crate::make_uart::make_uart;
 
 /// Extension trait for getting the current firmware version from a Zigbee device.
 pub trait CurrentVersion {
     /// Await the current firmware version from the Zigbee device.
-    fn await_current_version(
-        &mut self,
-        retry_interval: Duration,
-        max_retries: usize,
-    ) -> impl Future<Output = Option<Version>>;
+    fn get_current_version(&mut self) -> impl Future<Output = Option<Version>>;
 
     /// Parse the version information from the device.
     fn parse_version(&self, result: Result<EmberVersion, TryFromSliceError>) -> Option<Version> {
@@ -45,26 +37,12 @@ impl<T> CurrentVersion for Uart<T>
 where
     T: SerialPort + 'static,
 {
-    async fn await_current_version(
-        &mut self,
-        retry_interval: Duration,
-        mut max_retries: usize,
-    ) -> Option<Version> {
-        loop {
-            match self.get_ember_version().await {
-                Ok(result) => return self.parse_version(result),
-                Err(error) => {
-                    debug!("Failed to get version info: {error}");
-
-                    if let Some(retries) = max_retries.checked_sub(1) {
-                        max_retries = retries;
-                    } else {
-                        error!("Max retries reached: {error}");
-                        return None;
-                    }
-
-                    sleep(retry_interval).await;
-                }
+    async fn get_current_version(&mut self) -> Option<Version> {
+        match self.get_ember_version().await {
+            Ok(result) => self.parse_version(result),
+            Err(error) => {
+                debug!("Failed to get version info: {error}");
+                None
             }
         }
     }
@@ -82,10 +60,7 @@ where
         PROTOCOL_VERSION,
     );
 
-    let Some(current_version) = uart
-        .await_current_version(RETRY_INTERVAL, MAX_RETRIES)
-        .await
-    else {
+    let Some(current_version) = uart.get_current_version().await else {
         return (None, uart.terminate());
     };
 
