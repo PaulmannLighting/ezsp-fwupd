@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::fmt::Display;
 
 use le_stream::FromLeStream;
@@ -70,8 +71,8 @@ impl Header {
 
     /// Return the name of the OTA file.
     #[must_use]
-    pub fn name(&self) -> String {
-        String::from_utf8_lossy(&self.name).to_string()
+    pub fn name(&self) -> Cow<'_, str> {
+        String::from_utf8_lossy(&self.name)
     }
 
     /// Return the size of the image.
