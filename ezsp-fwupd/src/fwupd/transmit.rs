@@ -22,12 +22,14 @@ pub trait Transmit {
     fn init_stage2(&mut self) -> std::io::Result<()>;
 
     /// Transmit the firmware to the device using the XMODEM protocol.
-    fn transmit(
+    fn transmit<F>(
         &mut self,
-        firmware: Vec<u8>,
+        firmware: F,
         timeout: Option<Duration>,
         progress_bar: Option<&ProgressBar>,
-    ) -> std::io::Result<()>;
+    ) -> std::io::Result<()>
+    where
+        F: IntoIterator<Item = u8>;
 }
 
 impl<T> Transmit for T
@@ -54,12 +56,15 @@ where
         Ok(())
     }
 
-    fn transmit(
+    fn transmit<F>(
         &mut self,
-        firmware: Vec<u8>,
+        firmware: F,
         timeout: Option<Duration>,
         progress_bar: Option<&ProgressBar>,
-    ) -> std::io::Result<()> {
+    ) -> std::io::Result<()>
+    where
+        F: IntoIterator<Item = u8>,
+    {
         if let Some(timeout) = timeout {
             debug!("Setting timeout to {timeout:?}");
             self.set_timeout(timeout)?;

@@ -17,24 +17,29 @@ mod transmit;
 /// Trait for firmware update operations using a serial port.
 pub trait Fwupd: Sized {
     /// Performs a firmware update operation.
-    fn fwupd(
+    fn fwupd<F>(
         self,
-        firmware: Vec<u8>,
+        firmware: F,
         timeout: Option<Duration>,
         progress_bar: Option<&ProgressBar>,
-    ) -> impl Future<Output = std::io::Result<Self>>;
+    ) -> impl Future<Output = std::io::Result<Self>>
+    where
+        F: IntoIterator<Item = u8>;
 }
 
 impl<T> Fwupd for T
 where
     T: SerialPort + 'static,
 {
-    async fn fwupd(
+    async fn fwupd<F>(
         mut self,
-        firmware: Vec<u8>,
+        firmware: F,
         timeout: Option<Duration>,
         progress_bar: Option<&ProgressBar>,
-    ) -> std::io::Result<Self> {
+    ) -> std::io::Result<Self>
+    where
+        F: IntoIterator<Item = u8>,
+    {
         info!("Preparing bootloader...");
         self = self.prepare_bootloader().await;
 

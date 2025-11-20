@@ -21,7 +21,7 @@ where
 {
     info!("{} firmware...", direction.present_participle());
     let serial_port = serial_port
-        .fwupd(ota_file.payload().to_vec(), Some(timeout), None)
+        .fwupd(ota_file.payload().iter().copied(), Some(timeout), None)
         .await
         .inspect_err(|error| {
             error!("Firmware {direction} failed: {error}");
