@@ -3,10 +3,14 @@ use std::fmt::Display;
 
 use semver::Version;
 
+/// The direction of a firmware update.
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Direction {
+    /// An upgrade of the firmware.
     Upgrade,
+    /// A downgrade of the firmware.
     Downgrade,
+    /// An unknown direction (e.g., no current version).
     Unknown,
 }
 

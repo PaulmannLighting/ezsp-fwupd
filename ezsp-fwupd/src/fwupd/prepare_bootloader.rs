@@ -10,9 +10,9 @@ const MODE: u8 = 0x00;
 pub trait PrepareBootloader: Sized {
     /// Prepare the bootloader for firmware updates.
     ///
-    /// # Errors
-    ///
-    /// Returns an [`std::io::Error`] if the operation fails.
+    /// A failure to prepare the bootloader will be logged, but not returned,
+    /// since the device may already be in bootloader mode e.g. due to a
+    /// previously failed or interrupted firmware update.
     fn prepare_bootloader(self) -> impl Future<Output = Self>;
 }
 
