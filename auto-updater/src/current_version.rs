@@ -9,7 +9,6 @@ use semver::Version;
 use serialport::SerialPort;
 use tokio::time::sleep;
 
-use crate::constants::{CALLBACK_CHANNEL_SIZE, PROTOCOL_VERSION, RESPONSE_CHANNEL_SIZE};
 use crate::make_uart::make_uart;
 
 /// Extension trait for getting the current firmware version from a Zigbee device.
@@ -49,15 +48,20 @@ where
 }
 
 /// Get the current firmware version from the Zigbee device.
-pub async fn get_current_version<T>(serial_port: T) -> (Option<Version>, T)
+pub async fn get_current_version<T>(
+    serial_port: T,
+    callback_channel_size: usize,
+    response_channel_size: usize,
+    protocol_version: u8,
+) -> (Option<Version>, T)
 where
     T: SerialPort + 'static,
 {
     let (mut uart, _callbacks_rx) = make_uart(
         serial_port,
-        CALLBACK_CHANNEL_SIZE,
-        RESPONSE_CHANNEL_SIZE,
-        PROTOCOL_VERSION,
+        callback_channel_size,
+        response_channel_size,
+        protocol_version,
     );
 
     let Some(current_version) = uart.get_current_version().await else {

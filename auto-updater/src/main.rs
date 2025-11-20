@@ -16,7 +16,6 @@ use self::validate_ota_file::validate_ota_file;
 use crate::validate_firmware::validate_firmware;
 
 mod args;
-mod constants;
 mod current_version;
 mod direction;
 mod make_uart;
@@ -56,7 +55,13 @@ async fn main() -> ExitCode {
         return ExitCode::FAILURE;
     };
 
-    let (current_version, serial_port) = get_current_version(serial_port).await;
+    let (current_version, serial_port) = get_current_version(
+        serial_port,
+        args.callback_channel_size(),
+        args.response_channel_size(),
+        args.protocol_version(),
+    )
+    .await;
 
     if let Some(current_version) = &current_version {
         info!("Current version:  {current_version}");
@@ -81,12 +86,21 @@ async fn main() -> ExitCode {
     )
     .await
     {
-        Ok(serial_port) => validate_firmware(serial_port, metadata.version(), &direction)
-            .await
-            .map_or(ExitCode::FAILURE, |new_version| {
-                info!("Firmware {direction} successful. New version: {new_version}");
-                ExitCode::SUCCESS
-            }),
+        Ok(serial_port) => validate_firmware(
+            serial_port,
+            args.callback_channel_size(),
+            args.response_channel_size(),
+            args.protocol_version(),
+            args.timeout(),
+            args.max_retries(),
+            metadata.version(),
+            &direction,
+        )
+        .await
+        .map_or(ExitCode::FAILURE, |new_version| {
+            info!("Firmware {direction} successful. New version: {new_version}");
+            ExitCode::SUCCESS
+        }),
         Err(error) => {
             error!("Firmware update failed: {error}");
             ExitCode::FAILURE
