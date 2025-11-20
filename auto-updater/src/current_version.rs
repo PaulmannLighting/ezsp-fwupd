@@ -14,23 +14,6 @@ use crate::make_uart::make_uart;
 pub trait CurrentVersion {
     /// Await the current firmware version from the Zigbee device.
     fn get_current_version(&mut self) -> impl Future<Output = Option<Version>>;
-
-    /// Parse the version information from the device.
-    fn parse_version(&self, result: Result<EmberVersion, TryFromSliceError>) -> Option<Version> {
-        match result {
-            Ok(version_info) => match version_info.try_into() {
-                Ok(version) => Some(version),
-                Err(error) => {
-                    error!("Failed to parse version info: {error}");
-                    None
-                }
-            },
-            Err(error) => {
-                error!("Failed to parse version info: {error}");
-                None
-            }
-        }
-    }
 }
 
 impl<T> CurrentVersion for Uart<T>
@@ -39,7 +22,7 @@ where
 {
     async fn get_current_version(&mut self) -> Option<Version> {
         match self.get_ember_version().await {
-            Ok(result) => self.parse_version(result),
+            Ok(result) => parse_version(result),
             Err(error) => {
                 debug!("Failed to get version info: {error}");
                 None
@@ -66,4 +49,21 @@ where
 
     let serial_port = uart.terminate();
     (Some(current_version), serial_port)
+}
+
+/// Parse the version information from the device.
+fn parse_version(result: Result<EmberVersion, TryFromSliceError>) -> Option<Version> {
+    match result {
+        Ok(version_info) => match version_info.try_into() {
+            Ok(version) => Some(version),
+            Err(error) => {
+                error!("Failed to parse version info: {error}");
+                None
+            }
+        },
+        Err(error) => {
+            error!("Failed to parse version info: {error}");
+            None
+        }
+    }
 }
