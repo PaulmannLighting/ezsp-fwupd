@@ -38,6 +38,18 @@ async fn main() -> ExitCode {
 
     let args = Args::parse();
 
+    let metadata = match get_metadata(args.manifest()) {
+        Ok(Some(metadata)) => metadata,
+        Ok(None) => {
+            info!("No active firmware version configured.");
+            return ExitCode::SUCCESS;
+        }
+        Err(message) => {
+            error!("{message}");
+            return ExitCode::FAILURE;
+        }
+    };
+
     let Ok(serial_port) = open(
         args.tty().to_string(),
         BaudRate::RstCts,
@@ -49,18 +61,6 @@ async fn main() -> ExitCode {
 
     let Some((serial_port, current_version)) = get_current_version(serial_port).await else {
         return ExitCode::FAILURE;
-    };
-
-    let metadata = match get_metadata(args.manifest()) {
-        Ok(Some(metadata)) => metadata,
-        Ok(None) => {
-            info!("No active firmware version configured.");
-            return ExitCode::SUCCESS;
-        }
-        Err(message) => {
-            error!("{message}");
-            return ExitCode::FAILURE;
-        }
     };
 
     info!("Active version:   {}", metadata.version());
