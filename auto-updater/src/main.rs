@@ -9,7 +9,7 @@ use ashv2::{BaudRate, open};
 use clap::Parser;
 use ezsp_fwupd::{Fwupd, OtaFile, Reset};
 use le_stream::FromLeStream;
-use log::{error, info, warn};
+use log::{error, info};
 use semver::Version;
 use serialport::{FlowControl, SerialPort};
 use tokio::time::sleep;
@@ -91,7 +91,7 @@ async fn main() -> ExitCode {
             }),
         Err(error) => {
             error!("Firmware update failed: {error}");
-            rescue(args.tty(), &ota_file).await
+            ExitCode::FAILURE
         }
     }
 }
@@ -221,27 +221,4 @@ where
     }
 
     Some(new_version)
-}
-
-async fn rescue(tty: &str, ota_file: &OtaFile) -> ExitCode {
-    warn!("Attempting to rescue device by re-flashing firmware...");
-
-    let Ok(serial_port) = open(tty.to_string(), BaudRate::RstCts, FlowControl::Software)
-        .inspect_err(|error| error!("Failed to open serial port '{tty}': {error}"))
-    else {
-        return ExitCode::FAILURE;
-    };
-
-    if let Err(error) = serial_port
-        // Do not prepare the device, since it's most likely stuck in the bootloader state already.
-        .fwupd(ota_file.payload().to_vec(), None, None)
-        .await
-        .map(drop)
-    {
-        error!("Rescue firmware update failed: {error}");
-        return ExitCode::FAILURE;
-    }
-
-    info!("Rescue firmware update successful.");
-    ExitCode::SUCCESS
 }
