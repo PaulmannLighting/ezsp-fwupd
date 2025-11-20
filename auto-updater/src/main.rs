@@ -149,13 +149,7 @@ fn validate_ota_file(metadata: &Metadata) -> Option<OtaFile> {
         return None;
     };
 
-    let header = ota_file.header();
-    info!("OTA image name:   {}", header.name());
-    info!("OTA image type:   {}", header.image_type());
-    info!("OTA file version: {}", header.firmware_version());
-    info!("OTA Zigbee stack: {}", header.zigbee_stack_version());
-    info!("OTA manufacturer: {}", header.manufacturer_id());
-    info!("OTA image size:   {}", header.image_size());
+    ota_file.header().log();
     Some(ota_file)
 }
 
