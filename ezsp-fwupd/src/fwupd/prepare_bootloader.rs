@@ -1,5 +1,3 @@
-use std::io::Error;
-
 use ezsp::uart::Uart;
 use ezsp::{Bootloader, Callback};
 use log::{debug, error};
