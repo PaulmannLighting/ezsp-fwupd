@@ -1,4 +1,5 @@
 use std::array::TryFromSliceError;
+use std::time::Duration;
 
 use ezsp::GetValueExt;
 use ezsp::ezsp::value::EmberVersion;
@@ -6,6 +7,7 @@ use ezsp::uart::Uart;
 use log::{debug, error};
 use semver::Version;
 use serialport::SerialPort;
+use tokio::time::sleep;
 
 use crate::constants::{CALLBACK_CHANNEL_SIZE, PROTOCOL_VERSION, RESPONSE_CHANNEL_SIZE};
 use crate::make_uart::make_uart;
@@ -14,6 +16,24 @@ use crate::make_uart::make_uart;
 pub trait CurrentVersion {
     /// Await the current firmware version from the Zigbee device.
     fn get_current_version(&mut self) -> impl Future<Output = Option<Version>>;
+
+    /// Await the current firmware version from the Zigbee device.
+    async fn await_current_version(&mut self, interval: Duration, retries: u8) -> Option<Version> {
+        for attempt in 0..retries {
+            if let Some(version) = self.get_current_version().await {
+                debug!(
+                    "Retrieved current version on attempt #{}: {version}",
+                    attempt.saturating_add(1)
+                );
+                return Some(version);
+            }
+
+            sleep(interval).await;
+        }
+
+        error!("Exceeded maximum retries to get current version.");
+        None
+    }
 }
 
 impl<T> CurrentVersion for Uart<T>
