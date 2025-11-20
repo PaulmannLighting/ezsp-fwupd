@@ -21,10 +21,7 @@ pub trait CurrentVersion {
     async fn await_current_version(&mut self, interval: Duration, retries: u8) -> Option<Version> {
         for attempt in 0..retries {
             if let Some(version) = self.get_current_version().await {
-                debug!(
-                    "Retrieved current version on attempt #{}: {version}",
-                    attempt.saturating_add(1)
-                );
+                debug!("Retrieved current version on attempt #{attempt}: {version}");
                 return Some(version);
             }
 
