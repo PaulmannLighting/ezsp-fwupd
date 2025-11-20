@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 use le_stream::FromLeStream;
 use le_stream::derive::FromLeStream;
+use log::info;
 
 use self::field_control::FieldControl;
 use super::tag::Tag;
@@ -98,6 +99,17 @@ impl Header {
         }
 
         tags
+    }
+
+    /// Log the header information.
+    pub fn log(&self) {
+        info!("OTA image name:    {}", self.name());
+        info!("OTA image type:    {}", self.image_type());
+        info!("OTA image version: {}", self.version());
+        info!("OTA file version:  {}", self.firmware_version());
+        info!("OTA Zigbee stack:  {}", self.zigbee_stack_version());
+        info!("OTA manufacturer:  {}", self.manufacturer_id());
+        info!("OTA image size:    {}", self.image_size());
     }
 }
 
