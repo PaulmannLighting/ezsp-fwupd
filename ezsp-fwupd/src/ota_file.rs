@@ -82,7 +82,7 @@ impl OtaFile {
     ///
     /// # Errors
     ///
-    /// If the magic number does not match, returns `Err([u8; 4])` with the faulty magic number.
+    /// If the magic number does not match, returns `Err(Magic)` with the faulty magic number.
     pub fn validate(self) -> Result<Self, Magic> {
         if self.magic == MAGIC {
             Ok(self)
