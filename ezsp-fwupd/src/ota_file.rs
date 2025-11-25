@@ -5,7 +5,7 @@ use le_stream::FromLeStream;
 
 use self::header::Header;
 use self::tag::Tag;
-use self::upgrade_file_destination::UpgradeFileDestination;
+use self::upgrade_file_destination::{ThreadId, UpgradeFileDestination};
 
 const MAGIC: Magic = [0x1E, 0xF1, 0xEE, 0x0B];
 const HEADER_VERSION_ZIGBEE: u16 = 0x0100;
@@ -125,7 +125,7 @@ impl FromLeStream for OtaFile {
                     Eui64::from_le_stream(&mut bytes)?,
                 )),
                 HEADER_VERSION_THREAD => Some(UpgradeFileDestination::Thread(
-                    <[u8; 32]>::from_le_stream(&mut bytes)?.into(),
+                    ThreadId::from_le_stream(&mut bytes)?.into(),
                 )),
                 _ => None,
             }
