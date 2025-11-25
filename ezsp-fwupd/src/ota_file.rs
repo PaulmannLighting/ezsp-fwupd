@@ -135,7 +135,7 @@ impl FromLeStream for OtaFile {
         };
 
         let hardware_versions = if field_control.has_hardware_version() {
-            Some(u16::from_le_stream(&mut bytes)?..=u16::from_le_stream(&mut bytes)?)
+            Some(RangeInclusive::<u16>::from_le_stream(&mut bytes)?)
         } else {
             None
         };
