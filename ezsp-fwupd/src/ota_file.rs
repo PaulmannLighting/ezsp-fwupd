@@ -7,9 +7,11 @@ use self::header::Header;
 use self::tag::Tag;
 use self::upgrade_file_destination::UpgradeFileDestination;
 
-const MAGIC: [u8; 4] = [0x1E, 0xF1, 0xEE, 0x0B];
+const MAGIC: Magic = [0x1E, 0xF1, 0xEE, 0x0B];
 const HEADER_VERSION_ZIGBEE: u16 = 0x0100;
 const HEADER_VERSION_THREAD: u16 = 0x0200;
+
+type Magic = [u8; 4];
 
 mod header;
 mod tag;
@@ -18,7 +20,7 @@ mod upgrade_file_destination;
 /// Represents an OTA (Over-The-Air) file used for firmware updates.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct OtaFile {
-    magic: [u8; 4],
+    magic: Magic,
     header: Header,
     security_credentials: Option<u8>,
     upgrade_file_destination: Option<UpgradeFileDestination>,
@@ -30,7 +32,7 @@ pub struct OtaFile {
 impl OtaFile {
     /// Return the OTA file's header magic.
     #[must_use]
-    pub const fn magic(&self) -> &[u8; 4] {
+    pub const fn magic(&self) -> &Magic {
         &self.magic
     }
 
@@ -81,7 +83,7 @@ impl OtaFile {
     /// # Errors
     ///
     /// If the magic number does not match, returns `Err([u8; 4])` with the faulty magic number.
-    pub fn validate(self) -> Result<Self, [u8; 4]> {
+    pub fn validate(self) -> Result<Self, Magic> {
         if self.magic == MAGIC {
             Ok(self)
         } else {
@@ -107,7 +109,7 @@ impl FromLeStream for OtaFile {
     where
         T: Iterator<Item = u8>,
     {
-        let magic = <[u8; 4]>::from_le_stream(&mut bytes)?;
+        let magic = Magic::from_le_stream(&mut bytes)?;
         let header = Header::from_le_stream(&mut bytes)?;
         let field_control = header.field_control();
 
