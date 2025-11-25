@@ -1,4 +1,5 @@
 use std::fmt::Display;
+use std::ops::RangeInclusive;
 
 use ezsp::ember::Eui64;
 use le_stream::FromLeStream;
@@ -24,7 +25,7 @@ pub struct OtaFile {
     header: Header,
     security_credentials: Option<u8>,
     upgrade_file_destination: Option<UpgradeFileDestination>,
-    hardware_versions: Option<(u16, u16)>,
+    hardware_versions: Option<RangeInclusive<u16>>,
     tags: Vec<Tag>,
     payload: Vec<u8>,
 }
@@ -54,12 +55,12 @@ impl OtaFile {
         self.upgrade_file_destination.as_ref()
     }
 
-    /// Return the OTA file's hardware versions, if present.
+    /// Return the OTA file's supported hardware versions, if present.
     ///
-    /// The first value is the minimum hardware version, and the second value is the maximum hardware version.
+    /// The start value is the minimum hardware version, and the end value is the maximum hardware version.
     #[must_use]
-    pub const fn hardware_versions(&self) -> Option<(u16, u16)> {
-        self.hardware_versions
+    pub const fn hardware_versions(&self) -> Option<&RangeInclusive<u16>> {
+        self.hardware_versions.as_ref()
     }
 
     /// Return the OTA file's tags.
@@ -134,10 +135,7 @@ impl FromLeStream for OtaFile {
         };
 
         let hardware_versions = if field_control.has_hardware_version() {
-            Some((
-                u16::from_le_stream(&mut bytes)?,
-                u16::from_le_stream(&mut bytes)?,
-            ))
+            Some(u16::from_le_stream(&mut bytes)?..=u16::from_le_stream(&mut bytes)?)
         } else {
             None
         };
