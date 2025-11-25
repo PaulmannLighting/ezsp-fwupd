@@ -57,10 +57,8 @@ where
         debug!("Initializing stage 2...");
         self.init_stage2()?;
 
-        if let Err(error) = self.transmit(firmware, Some(original_timeout), progress_bar) {
-            self.reset(timeout)?;
-            return Err(error);
-        }
+        debug!("Transmitting firmware...");
+        self.transmit(firmware, Some(original_timeout), progress_bar)?;
 
         progress_bar.set_message("Firmware update complete, resetting device...");
         self.reset(timeout)?;
