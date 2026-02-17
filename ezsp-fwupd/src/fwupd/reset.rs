@@ -1,6 +1,5 @@
 use std::time::Duration;
 
-use ashv2::HexSlice;
 use log::debug;
 use serialport::SerialPort;
 
@@ -39,7 +38,7 @@ where
 
         let mut buffer = Vec::new();
         self.read_to_end(buffer.as_mut()).ignore_timeout()?;
-        debug!("Read buffer after reset: {:#04X}", HexSlice::new(&buffer));
+        debug!("Read buffer after reset: {buffer:#04X?}");
 
         self.set_timeout(original_timeout)?;
         Ok(())

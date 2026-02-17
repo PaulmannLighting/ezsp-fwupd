@@ -1,6 +1,5 @@
 use std::time::Duration;
 
-use ashv2::HexSlice;
 use indicatif::ProgressBar;
 use log::{debug, trace};
 use serialport::SerialPort;
@@ -42,7 +41,7 @@ where
         let mut response = [0; INIT_STAGE1_RESPONSE_SIZE];
         debug!("Waiting for response...");
         self.read_exact(&mut response)?;
-        trace!("Received response: {:#04X}", HexSlice::new(&response));
+        trace!("Received response: {response:#04X?}");
         Ok(())
     }
 
@@ -52,7 +51,7 @@ where
         let mut response = [0; INIT_STAGE2_RESPONSE_SIZE];
         debug!("Waiting for response...");
         self.read_exact(&mut response)?;
-        trace!("Received response: {:#04X}", HexSlice::new(&response));
+        trace!("Received response: {response:#04X?}");
         Ok(())
     }
 
@@ -74,7 +73,7 @@ where
 
         progress_bar.set_message("Flashing firmware...");
         let response = self.send(firmware, progress_bar)?;
-        debug!("Firmware sent response: {:#04X}", HexSlice::new(&response));
+        debug!("Firmware sent response: {response:#04X?}");
 
         Ok(())
     }

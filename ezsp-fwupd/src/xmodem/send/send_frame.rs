@@ -1,6 +1,5 @@
 use std::io::{Read, Write};
 
-use ashv2::HexSlice;
 use log::{debug, error, trace};
 
 use crate::ignore_timeout::IgnoreTimeout;
@@ -15,7 +14,7 @@ pub trait SendFrame: Read + Write {
 
         let mut ctr: usize = 0;
         let bytes = frame.into_bytes();
-        trace!("Sending frame #{index}: {:#04X}", HexSlice::new(&bytes));
+        trace!("Sending frame #{index}: {bytes:#04X?}");
 
         loop {
             match self.try_send_frame(&bytes) {
@@ -53,11 +52,7 @@ pub trait SendFrame: Read + Write {
         let [byte] = response;
         let mut excess = Vec::new();
         self.read_to_end(&mut excess).ignore_timeout()?;
-        trace!(
-            "Received {} excess bytes: {:#04X}",
-            excess.len(),
-            HexSlice::new(&excess)
-        );
+        trace!("Received {} excess bytes: {excess:#04X?}", excess.len());
 
         match byte {
             ACK => Ok(()),

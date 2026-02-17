@@ -1,6 +1,7 @@
 use std::io;
 use std::time::Duration;
 
+use ashv2::TryCloneNative;
 use ezsp_fwupd::{Fwupd, OtaFile};
 use log::{error, info};
 use serialport::SerialPort;
@@ -17,7 +18,7 @@ pub async fn update_firmware<T>(
     reboot_grace_time: Duration,
 ) -> io::Result<T>
 where
-    T: SerialPort + 'static,
+    T: SerialPort + TryCloneNative + Send + Sync + 'static,
 {
     info!("{} firmware...", direction.present_participle());
     let serial_port = serial_port

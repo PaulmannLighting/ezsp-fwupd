@@ -1,18 +1,22 @@
 use std::time::Duration;
 
+use ashv2::{Actor, TryCloneNative};
+use ezsp::Bootloader;
+use ezsp::uart::Uart;
 use indicatif::ProgressBar;
-use log::{debug, info};
+use log::{debug, error, info};
 use serialport::SerialPort;
+use tokio::sync::mpsc::channel;
 
-use self::prepare_bootloader::PrepareBootloader;
 pub use self::reset::Reset;
 use self::transmit::Transmit;
 pub use crate::xmodem::FrameCount;
-use crate::{ClearBuffer, FlashProgress};
+use crate::{ClearBuffer, FlashProgress, discard_callbacks};
 
-mod prepare_bootloader;
 mod reset;
 mod transmit;
+
+const MODE: u8 = 0x00;
 
 /// Trait for firmware update operations using a serial port.
 pub trait Fwupd: Sized {
@@ -29,7 +33,7 @@ pub trait Fwupd: Sized {
 
 impl<T> Fwupd for T
 where
-    T: SerialPort + 'static,
+    T: SerialPort + TryCloneNative + Send + Sync + 'static,
 {
     async fn fwupd<F>(
         mut self,
@@ -41,7 +45,19 @@ where
         F: IntoIterator<Item = u8>,
     {
         info!("Preparing bootloader...");
-        self = self.prepare_bootloader().await;
+        let (response_tx, response_rx) = channel(8);
+        let (actor, proxy) = Actor::new(self.try_clone_native()?, response_tx, 8)?;
+        let (tx_handle, rx_handle) = actor.spawn();
+        let (callbacks_tx, callbacks_rx) = channel(8);
+        discard_callbacks(callbacks_rx);
+        let mut uart = Uart::new(proxy, response_rx, callbacks_tx, 8, 8);
+        debug!("Launching standalone bootloader...");
+        /*
+        uart.launch_standalone_bootloader(MODE)
+            .await
+            .unwrap_or_else(|error| {
+                error!("Failed to launch standalone bootloader: {error}");
+            });*/
 
         let original_timeout = self.timeout();
 

@@ -7,10 +7,10 @@ edition = "2024"
 publish = false
 
 [dependencies]
-ashv2 = "3"
+ashv2 = { path = "../../ashv2" }
 bitflags = "2.11"
 crc = "3.3"
-ezsp = { version = "1.5", features = ["ashv2"] }
+ezsp = { path = "../../ezsp", features = ["ashv2"] }
 indicatif = "0.18"
 le-stream = { version = "6", features = ["derive", "macaddr"] }
 log = "0.4"

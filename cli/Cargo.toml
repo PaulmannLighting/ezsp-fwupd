@@ -7,10 +7,10 @@ edition = "2024"
 publish = false
 
 [dependencies]
-ashv2 = { version = "3" }
+ashv2 = { path = "../../ashv2" }
 clap = { version = "4.5", features = ["derive"] }
 env_logger = "0.11"
-ezsp = { version = "1.5", features = ["semver"] }
+ezsp = { path = "../../ezsp", features = ["ashv2"] }
 ezsp-fwupd = { path = "../ezsp-fwupd" }
 indicatif = "0.18"
 le-stream = { version = "6", features = ["derive"] }

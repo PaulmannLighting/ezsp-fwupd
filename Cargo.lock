@@ -63,11 +63,10 @@ dependencies = [
 
 [[package]]
 name = "ashv2"
-version = "1.2.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4db2061e1c7fdd61883a3878f5e3e3f4d92ea91bd273e897a3cc01c5f623ac4a"
+version = "3.0.0"
 dependencies = [
  "bitflags 2.11.0",
+ "const_env",
  "crc",
  "heapless",
  "log",
@@ -80,8 +79,7 @@ dependencies = [
 [[package]]
 name = "ashv2"
 version = "3.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "054e3cae2d879ca977597cbe47eb99c5d252f1f164593acb494e06ace1428dbc"
+source = "git+https://github.com/PaulmannLighting/ashv2/#a662213b327e63b6dad585933728ee0d3ecaa08a"
 dependencies = [
  "bitflags 2.11.0",
  "const_env",
@@ -103,7 +101,7 @@ dependencies = [
  "env_logger",
  "ezsp",
  "ezsp-fwupd",
- "le-stream 6.0.0",
+ "le-stream",
  "log",
  "semver",
  "serde",
@@ -198,7 +196,7 @@ dependencies = [
  "ezsp",
  "ezsp-fwupd",
  "indicatif",
- "le-stream 6.0.0",
+ "le-stream",
  "log",
  "semver",
  "serialport",
@@ -326,19 +324,18 @@ dependencies = [
 
 [[package]]
 name = "ezsp"
-version = "1.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e29cb5fb0478e50feefa28cc88e9dfaffb3265a6e525861c8bcf6bfba99c1e8"
+version = "1.6.0"
 dependencies = [
- "ashv2 1.2.10",
+ "ashv2 3.0.0 (git+https://github.com/PaulmannLighting/ashv2/)",
  "bitflags 2.11.0",
  "enum-iterator",
  "heapless",
- "le-stream 5.2.0",
+ "le-stream",
  "log",
  "macaddr",
  "num-derive",
  "num-traits",
+ "repr-discriminant",
  "semver",
  "silizium",
  "tokio",
@@ -353,7 +350,7 @@ dependencies = [
  "crc",
  "ezsp",
  "indicatif",
- "le-stream 6.0.0",
+ "le-stream",
  "log",
  "serialport",
  "tokio",
@@ -455,21 +452,11 @@ dependencies = [
 
 [[package]]
 name = "le-stream"
-version = "5.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d92d5655e01757e98f0aecbb877cc42e774050282669ca8b92f9e35ddb8686de"
-dependencies = [
- "heapless",
- "le-stream-derive",
- "macaddr",
-]
-
-[[package]]
-name = "le-stream"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "adb5a006f01023a457d9029651f474419805ee0be5c60ac13d4bcbeedf95584c"
 dependencies = [
+ "heapless",
  "le-stream-derive",
  "macaddr",
 ]
@@ -656,6 +643,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a96887878f22d7bad8a3b6dc5b7440e0ada9a245242924394987b21cf2210a4c"
 
 [[package]]
+name = "repr-discriminant"
+version = "3.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0683c49017921a0181aa1e7b25ce9733a3f5d4a6c5d49b86b4fe275a3cb21f56"
+dependencies = [
+ "repr-discriminant-derive",
+]
+
+[[package]]
+name = "repr-discriminant-derive"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "33893daaa5511425b31abb167913a6c7616dea60d0cd51f335a083c4e21592f0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "rustversion"
 version = "1.0.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -742,12 +749,11 @@ dependencies = [
 
 [[package]]
 name = "silizium"
-version = "1.0.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a5a9ebeffc7fd9fdc7b2d88dd22df7a901e02ae8100af5db826380ed4a097dbd"
+version = "1.0.6"
+source = "git+https://github.com/PaulmannLighting/silizium/#f68d831263a4b98dad87f70b470538aab27c4d2c"
 dependencies = [
  "bitflags 2.11.0",
- "le-stream 5.2.0",
+ "le-stream",
  "macaddr",
  "num-derive",
  "num-traits",
