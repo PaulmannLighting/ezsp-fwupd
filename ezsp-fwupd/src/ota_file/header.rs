@@ -2,7 +2,6 @@ use std::borrow::Cow;
 use std::fmt::Display;
 
 use le_stream::FromLeStream;
-use le_stream::derive::FromLeStream;
 use log::info;
 
 use self::field_control::FieldControl;

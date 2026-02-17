@@ -1,4 +1,4 @@
-use le_stream::derive::FromLeStream;
+use le_stream::FromLeStream;
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, FromLeStream)]
 pub struct Tag {

@@ -1,5 +1,5 @@
 use bitflags::bitflags;
-use le_stream::derive::FromLeStream;
+use le_stream::FromLeStream;
 
 /// Represents the field control flags in an OTA (Over-The-Air) file header.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, FromLeStream)]
