@@ -41,7 +41,7 @@ where
         F: IntoIterator<Item = u8>,
     {
         info!("Preparing bootloader...");
-        self.try_clone_native()?.launch_bootloader().await?;
+        self = self.launch_bootloader().await?;
         let original_timeout = self.timeout();
 
         if let Some(timeout) = timeout {
