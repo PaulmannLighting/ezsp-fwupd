@@ -7,15 +7,13 @@ use std::time::Duration;
 
 use ashv2::{BaudRate, open};
 use clap::{Parser, Subcommand};
-use ezsp::uart::Uart;
-use ezsp::{Callback, GetValueExt};
-use ezsp_fwupd::{FrameCount, Fwupd, OtaFile, Reset, discard_callbacks};
+use ezsp::GetValueExt;
+use ezsp_fwupd::{FrameCount, Fwupd, OtaFile, Reset, make_uart};
 use indicatif::{ProgressBar, ProgressStyle};
 use le_stream::FromLeStream;
 use log::error;
 use semver::Version;
 use serialport::FlowControl;
-use tokio::sync::mpsc::channel;
 
 const DEFAULT_TIMEOUT: u64 = 1000; // Default timeout in milliseconds
 
@@ -141,11 +139,19 @@ async fn query(tty: &str) -> ExitCode {
         return ExitCode::FAILURE;
     };
 
-    let (callbacks_tx, callbacks_rx) = channel::<Callback>(8);
-    discard_callbacks(callbacks_rx);
-    let mut uart = Uart::new(serial_port, callbacks_tx, 8, 8);
+    let Ok((tasks, mut uart)) = make_uart(serial_port, 8, 8, 8)
+        .inspect_err(|error| error!("Failed to create UART: {error}"))
+    else {
+        return ExitCode::FAILURE;
+    };
 
-    match uart.get_ember_version().await {
+    let version = uart.get_ember_version().await;
+    tasks
+        .terminate()
+        .await
+        .map_or_else(|error| error!("Failed to terminate tasks: {error}"), drop);
+
+    match version {
         Ok(result) => match result {
             Ok(version_info) => {
                 println!("{version_info}");

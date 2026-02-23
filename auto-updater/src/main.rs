@@ -18,7 +18,6 @@ use crate::validate_firmware::validate_firmware;
 mod args;
 mod current_version;
 mod direction;
-mod make_uart;
 mod manifest;
 mod uart_params;
 mod update_firmware;

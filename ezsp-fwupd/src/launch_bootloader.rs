@@ -1,3 +1,5 @@
+use std::io;
+
 use ashv2::{Actor, TryCloneNative};
 use ezsp::Bootloader;
 use ezsp::uart::Uart;
@@ -10,19 +12,18 @@ use crate::discard_callbacks;
 const MODE: u8 = 0x00;
 
 /// Launch a standalone bootloader on the Zigbee NIC's UART.
-pub trait LaunchBootloader {
+pub trait LaunchBootloader: Sized {
     /// Launch a standalone bootloader on the Zigbee NIC's UART.
-    fn launch_bootloader(self) -> impl Future<Output = std::io::Result<()>>;
+    fn launch_bootloader(self) -> impl Future<Output = io::Result<Self>>;
 }
 
 impl<T> LaunchBootloader for T
 where
     T: SerialPort + TryCloneNative + Send + Sync + 'static,
 {
-    async fn launch_bootloader(self) -> std::io::Result<()> {
+    async fn launch_bootloader(self) -> io::Result<T> {
         let (response_tx, response_rx) = channel(8);
-        let (actor, proxy) = Actor::new(self, response_tx, 8)?;
-        let (tx_handle, rx_handle) = actor.spawn();
+        let (tasks, proxy) = Actor::new(self, response_tx, 8)?.spawn();
         let (callbacks_tx, callbacks_rx) = channel(8);
         discard_callbacks(callbacks_rx);
         let mut uart = Uart::new(proxy, response_rx, callbacks_tx, 8, 8);
@@ -32,6 +33,9 @@ where
             .unwrap_or_else(|error| {
                 error!("Failed to launch standalone bootloader: {error}");
             });
-        Ok(())
+        let serial_port = tasks.terminate().await.map_err(|error| {
+            io::Error::other(format!("Failed to terminate actor tasks: {error}"))
+        })?;
+        Ok(serial_port)
     }
 }

@@ -1,18 +1,18 @@
 use core::time::Duration;
 
-use ezsp_fwupd::Reset;
+use ashv2::TryCloneNative;
+use ezsp_fwupd::{Reset, make_uart};
 use log::{error, info};
 use semver::Version;
 use serialport::SerialPort;
 
 use crate::current_version::CurrentVersion;
 use crate::direction::Direction;
-use crate::make_uart::make_uart;
 use crate::uart_params::UartParams;
 
 /// Validate the firmware version after the update.
 pub async fn validate_firmware<T>(
-    serial_port: T,
+    mut serial_port: T,
     uart_params: &UartParams,
     retry_interval: Duration,
     max_retries: u8,
@@ -20,14 +20,17 @@ pub async fn validate_firmware<T>(
     direction: &Direction,
 ) -> Option<Version>
 where
-    T: SerialPort + 'static,
+    T: SerialPort + TryCloneNative + Send + Sync + 'static,
 {
-    let mut uart = make_uart(
-        serial_port,
+    let (tasks, mut uart) = make_uart(
+        serial_port
+            .try_clone_native()
+            .expect("Failed to clone serial port."),
         uart_params.callback_channel_size(),
         uart_params.response_channel_size(),
         uart_params.protocol_version(),
-    );
+    )
+    .expect("Failed to create uart");
 
     info!("Validating firmware version.");
     let Some(new_version) = uart
@@ -36,12 +39,21 @@ where
     else {
         error!("Failed to get new firmware version after update.");
 
-        if let Err(error) = uart.terminate().reset(Some(retry_interval)) {
+        if let Err(error) = serial_port.reset(Some(retry_interval)) {
             error!("Failed to reset device: {error}");
         }
 
+        tasks
+            .terminate()
+            .await
+            .map_or_else(|error| error!("Failed to terminate tasks: {error}"), drop);
         return None;
     };
+
+    tasks
+        .terminate()
+        .await
+        .map_or_else(|error| error!("Failed to terminate tasks: {error}"), drop);
 
     if new_version != *version {
         error!("Firmware {direction} failed: expected version {version}, got {new_version}",);
