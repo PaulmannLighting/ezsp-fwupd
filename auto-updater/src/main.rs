@@ -10,19 +10,19 @@ use serialport::FlowControl;
 use self::args::Args;
 use self::current_version::get_current_version;
 use self::direction::Direction;
+use self::load_ota_file::LoadOtaFile;
 use self::manifest::get_metadata;
 use self::update_firmware::update_firmware;
-use self::validate_ota_file::validate_ota_file;
 use crate::validate_firmware::validate_firmware;
 
 mod args;
 mod current_version;
 mod direction;
+mod load_ota_file;
 mod manifest;
 mod uart_params;
 mod update_firmware;
 mod validate_firmware;
-mod validate_ota_file;
 
 #[tokio::main]
 async fn main() -> ExitCode {
@@ -42,7 +42,7 @@ async fn main() -> ExitCode {
         }
     };
 
-    let Some(ota_file) = validate_ota_file(&metadata) else {
+    let Some(ota_file) = metadata.load_ota_file() else {
         return ExitCode::FAILURE;
     };
 
