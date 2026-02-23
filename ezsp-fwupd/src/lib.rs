@@ -12,5 +12,6 @@ mod discard_callbacks;
 mod flash_progress;
 mod fwupd;
 mod ignore_timeout;
+mod launch_bootloader;
 mod ota_file;
 mod xmodem;
