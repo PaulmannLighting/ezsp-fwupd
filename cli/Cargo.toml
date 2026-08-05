@@ -7,7 +7,6 @@ edition = "2024"
 publish = false
 
 [dependencies]
-ashv2.workspace = true
 clap.workspace = true
 env_logger.workspace = true
 ezsp = { workspace = true, features = ["semver"] }

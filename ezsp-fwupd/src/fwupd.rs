@@ -1,6 +1,5 @@
 use std::time::Duration;
 
-use ashv2::TryCloneNative;
 use indicatif::ProgressBar;
 use log::{debug, info};
 use serialport::SerialPort;
@@ -29,7 +28,7 @@ pub trait Fwupd: Sized {
 
 impl<T> Fwupd for T
 where
-    T: SerialPort + TryCloneNative + Send + Sync + 'static,
+    T: SerialPort + Send + 'static,
 {
     async fn fwupd<F>(
         mut self,

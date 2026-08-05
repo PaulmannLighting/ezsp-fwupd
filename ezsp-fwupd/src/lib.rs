@@ -5,7 +5,7 @@ pub use self::discard_callbacks::discard_callbacks;
 pub use self::flash_progress::FlashProgress;
 pub use self::fwupd::{FrameCount, Fwupd, Reset};
 pub use self::ignore_timeout::IgnoreTimeout;
-pub use self::make_uart::make_uart;
+pub use self::make_uart::{MakeUartError, Tasks, make_uart};
 pub use self::ota_file::OtaFile;
 
 mod clear_buffer;

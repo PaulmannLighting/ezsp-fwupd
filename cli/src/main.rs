@@ -5,7 +5,6 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::time::Duration;
 
-use ashv2::{BaudRate, open};
 use clap::{Parser, Subcommand};
 use ezsp::GetValueExt;
 use ezsp_fwupd::{FrameCount, Fwupd, OtaFile, Reset, make_uart};
@@ -15,6 +14,7 @@ use log::error;
 use semver::Version;
 use serialport::FlowControl;
 
+const BAUD_RATE: u32 = 115_200;
 const DEFAULT_TIMEOUT: u64 = 1000; // Default timeout in milliseconds
 
 #[derive(Debug, Parser)]
@@ -94,7 +94,9 @@ async fn flash(tty: String, firmware: &Path, timeout: Duration) -> ExitCode {
     progress_bar.println("### Firmware update info ###");
     progress_bar.println(ota_file.to_string());
 
-    let Ok(serial_port) = open(tty.clone(), BaudRate::RstCts, FlowControl::Software)
+    let Ok(serial_port) = serialport::new(&tty, BAUD_RATE)
+        .flow_control(FlowControl::Software)
+        .open_native()
         .inspect_err(|error| error!("Failed to open serial port '{tty}': {error}"))
     else {
         return ExitCode::FAILURE;
@@ -117,7 +119,9 @@ async fn flash(tty: String, firmware: &Path, timeout: Duration) -> ExitCode {
 
 /// Reset the device.
 fn reset(tty: &str, timeout: Option<Duration>) -> ExitCode {
-    let Ok(mut serial_port) = open(tty.to_string(), BaudRate::RstCts, FlowControl::Software)
+    let Ok(mut serial_port) = serialport::new(tty, BAUD_RATE)
+        .flow_control(FlowControl::Software)
+        .open_native()
         .inspect_err(|error| error!("Failed to open serial port '{tty}': {error}"))
     else {
         return ExitCode::FAILURE;
@@ -133,13 +137,16 @@ fn reset(tty: &str, timeout: Option<Duration>) -> ExitCode {
 
 /// Query the device for version info.
 async fn query(tty: &str) -> ExitCode {
-    let Ok(serial_port) = open(tty.to_string(), BaudRate::RstCts, FlowControl::Software)
+    let Ok(serial_port) = serialport::new(tty, BAUD_RATE)
+        .flow_control(FlowControl::Software)
+        .open_native()
         .inspect_err(|error| error!("Failed to open serial port '{tty}': {error}"))
     else {
         return ExitCode::FAILURE;
     };
 
     let Ok((tasks, mut uart)) = make_uart(serial_port, 8, 8, 8)
+        .await
         .inspect_err(|error| error!("Failed to create UART: {error}"))
     else {
         return ExitCode::FAILURE;

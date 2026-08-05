@@ -8,6 +8,7 @@ publish = false
 
 [dependencies]
 ashv2.workspace = true
+async-serialport.workspace = true
 bitflags.workspace = true
 crc.workspace = true
 ezsp.workspace = true
@@ -15,7 +16,7 @@ indicatif.workspace = true
 le-stream = { workspace = true, features = ["macaddr"] }
 log.workspace = true
 serialport.workspace = true
-tokio = { workspace = true, features = ["sync"] }
+tokio = { workspace = true, features = ["rt", "sync"] }
 
 [lints]
 workspace = true

@@ -2,7 +2,6 @@
 
 use std::process::ExitCode;
 
-use ashv2::{BaudRate, open};
 use clap::Parser;
 use log::{error, info};
 use serialport::FlowControl;
@@ -23,6 +22,8 @@ mod manifest;
 mod uart_params;
 mod update_firmware;
 mod validate_firmware;
+
+const BAUD_RATE: u32 = 115_200;
 
 #[tokio::main]
 async fn main() -> ExitCode {
@@ -46,12 +47,11 @@ async fn main() -> ExitCode {
         return ExitCode::FAILURE;
     };
 
-    let Ok(serial_port) = open(
-        args.tty().to_string(),
-        BaudRate::RstCts,
-        FlowControl::Software,
-    )
-    .inspect_err(|error| error!("Failed to open serial port '{}': {error}", args.tty())) else {
+    let Ok(serial_port) = serialport::new(args.tty(), BAUD_RATE)
+        .flow_control(FlowControl::Software)
+        .open_native()
+        .inspect_err(|error| error!("Failed to open serial port '{}': {error}", args.tty()))
+    else {
         return ExitCode::FAILURE;
     };
 

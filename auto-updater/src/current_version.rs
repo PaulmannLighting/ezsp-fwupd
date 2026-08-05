@@ -1,10 +1,8 @@
 use std::array::TryFromSliceError;
 use std::time::Duration;
 
-use ashv2::TryCloneNative;
-use ezsp::GetValueExt;
 use ezsp::ezsp::value::EmberVersion;
-use ezsp::uart::Uart;
+use ezsp::{Connection, GetValueExt};
 use ezsp_fwupd::make_uart;
 use log::{debug, error};
 use semver::Version;
@@ -34,7 +32,7 @@ pub trait CurrentVersion {
     }
 }
 
-impl CurrentVersion for Uart {
+impl CurrentVersion for Connection {
     async fn get_current_version(&mut self) -> Option<Version> {
         match self.get_ember_version().await {
             Ok(result) => parse_version(result),
@@ -52,7 +50,7 @@ pub async fn get_current_version<T>(
     uart_params: &UartParams,
 ) -> (Option<Version>, T)
 where
-    T: SerialPort + TryCloneNative + Send + Sync + 'static,
+    T: SerialPort + Send + 'static,
 {
     let (tasks, mut uart) = make_uart(
         serial_port,
@@ -60,6 +58,7 @@ where
         uart_params.response_channel_size(),
         uart_params.protocol_version(),
     )
+    .await
     .expect("Failed to create uart");
 
     let current_version = uart.get_current_version().await;
