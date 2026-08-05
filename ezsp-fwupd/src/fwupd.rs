@@ -12,6 +12,8 @@ use crate::{ClearBuffer, FlashProgress};
 mod gecko_bootloader;
 mod transmit;
 
+const XMODEM_CRC_REQUEST: u8 = b'C';
+
 /// Performs a complete Gecko standalone-bootloader firmware update on a native serial port.
 ///
 /// The implementation temporarily turns the port into an asynchronous ASHv2/EZSP connection to

@@ -68,15 +68,17 @@ binary transfer protocol.
 | Phase | Host output | Expected device output | Owner |
 | --- | --- | --- | --- |
 | Wake console | Carriage return | Text ending in `BL >` | `GeckoBootloader` |
-| Select upload | ASCII `1` | ASCII `C` stream | `GeckoBootloader` writes; `xmodem` reads |
+| Select upload | ASCII `1` | Console text ending in ASCII `C` | `GeckoBootloader` |
 | Transfer | XMODEM-CRC blocks and `EOT` | Block acknowledgements and final `ACK` | `xmodem` |
 | Return to menu | Nothing | Completion text ending in `BL >` | `GeckoBootloader` |
 | Run application | ASCII `2` | Optional startup output | `GeckoBootloader` |
 
-The initial `C` is deliberately not consumed by `start_xmodem_upload`; `Xmodem::send` needs it to
-select CRC16 mode. Menu synchronization uses the stable `BL >` prompt instead of fixed response
-lengths because bootloader banners and menu text can vary. A response is bounded to 1024 bytes so an
-unexpected stream cannot grow memory without limit.
+`start_xmodem_upload` consumes the bootloader's console response through the initial `C`. A one-byte
+adapter then replays that already-observed request to `Xmodem::send`, which needs it to select CRC16
+mode. This prevents any preceding status text from consuming the XMODEM retry budget. Menu
+synchronization uses stable terminators instead of fixed response lengths because bootloader banners
+and menu text can vary. A response is bounded to 1024 bytes so an unexpected stream cannot grow
+memory without limit.
 
 Gecko UART bootloaders normally run without flow control, while NCP application firmware commonly
 uses RTS/CTS or XON/XOFF. `Fwupd` records the application's setting before bootloader entry, disables
@@ -89,7 +91,7 @@ end.
 behavior to `xmodem` 0.4 with these settings:
 
 - standard 128-byte blocks;
-- CRC16 selected from the bootloader's initial `C`;
+- CRC16 selected from the bootloader's validated and replayed initial `C`;
 - `SUB` padding supplied by the dependency;
 - an error budget of ten unexpected responses or read timeouts.
 

@@ -5,9 +5,56 @@ use log::debug;
 use serialport::SerialPort;
 use xmodem::{BlockLength, Error as XmodemError, Xmodem};
 
+use super::XMODEM_CRC_REQUEST;
 use crate::FlashProgress;
 
 const XMODEM_MAX_ERRORS: u32 = 10;
+
+#[derive(Debug)]
+struct HandshakeReplay<'a, T> {
+    device: &'a mut T,
+    byte: Option<u8>,
+}
+
+impl<'a, T> HandshakeReplay<'a, T> {
+    const fn new(device: &'a mut T, byte: u8) -> Self {
+        Self {
+            device,
+            byte: Some(byte),
+        }
+    }
+}
+
+impl<T> Read for HandshakeReplay<'_, T>
+where
+    T: Read,
+{
+    fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+        if buffer.is_empty() {
+            return Ok(0);
+        }
+
+        if let Some(byte) = self.byte.take() {
+            buffer[0] = byte;
+            return Ok(1);
+        }
+
+        self.device.read(buffer)
+    }
+}
+
+impl<T> Write for HandshakeReplay<'_, T>
+where
+    T: Write,
+{
+    fn write(&mut self, buffer: &[u8]) -> io::Result<usize> {
+        self.device.write(buffer)
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        self.device.flush()
+    }
+}
 
 #[derive(Debug)]
 struct FirmwareReader<'a, T> {
@@ -52,8 +99,9 @@ where
 pub trait Transmit {
     /// Transmits the firmware using standard 128-byte XMODEM blocks and CRC negotiation.
     ///
-    /// The receiver's initial ASCII `C` must still be pending on the device stream when this method
-    /// is called. If supplied, `progress_bar` advances when each firmware block is read.
+    /// The Gecko console handler must have observed and consumed the receiver's initial ASCII `C`
+    /// before this method is called. The request is replayed to the XMODEM implementation. If
+    /// supplied, `progress_bar` advances when each firmware block is read.
     ///
     /// # Errors
     ///
@@ -111,10 +159,13 @@ where
     T: Iterator<Item = u8>,
 {
     let mut firmware = FirmwareReader::new(firmware, progress_bar);
+    let mut device = HandshakeReplay::new(device, XMODEM_CRC_REQUEST);
     let mut xmodem = Xmodem::new();
     xmodem.block_length = BlockLength::Standard;
     xmodem.max_errors = XMODEM_MAX_ERRORS;
-    xmodem.send(device, &mut firmware).map_err(map_xmodem_error)
+    xmodem
+        .send(&mut device, &mut firmware)
+        .map_err(map_xmodem_error)
 }
 
 #[cfg(test)]
@@ -126,7 +177,6 @@ mod tests {
     use super::send_xmodem;
 
     const ACK: u8 = 0x06;
-    const CRC_REQUEST: u8 = b'C';
     const DATA: u8 = 0xA5;
     const EOT: u8 = 0x04;
     const STANDARD_FRAME_SIZE: usize = 133;
@@ -164,8 +214,8 @@ mod tests {
     }
 
     #[test]
-    fn sends_firmware_with_xmodem_crate() {
-        let mut device = MockIo::new([CRC_REQUEST, ACK, ACK]);
+    fn replays_consumed_crc_request_to_xmodem_crate() {
+        let mut device = MockIo::new([ACK, ACK]);
         let progress_bar = ProgressBar::hidden();
 
         let bytes_sent = send_xmodem(&mut device, [DATA].into_iter(), Some(&progress_bar))

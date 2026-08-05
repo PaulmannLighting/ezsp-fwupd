@@ -16,6 +16,7 @@ use serialport::FlowControl;
 
 const BAUD_RATE: u32 = 115_200;
 const DEFAULT_TIMEOUT: u64 = 1000; // Default timeout in milliseconds
+const FLASH_FAILURE_MESSAGE: &str = "Firmware update failed";
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -107,13 +108,13 @@ async fn flash(tty: String, firmware: &Path, timeout: Duration) -> ExitCode {
         .await
         .map(drop);
 
-    progress_bar.finish();
-
     if let Err(error) = result {
-        error!("Firmware update failed: {error}");
+        progress_bar.abandon_with_message(FLASH_FAILURE_MESSAGE);
+        error!("{FLASH_FAILURE_MESSAGE}: {error}");
         return ExitCode::FAILURE;
     }
 
+    progress_bar.finish();
     ExitCode::SUCCESS
 }
 

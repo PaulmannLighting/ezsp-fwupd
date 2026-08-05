@@ -73,9 +73,9 @@ For direct EZSP access, use `make_uart(...).await`. It returns an `ezsp::Connect
 owner. Keep `Tasks` alive while using the connection; `Tasks::terminate().await` stops and joins the
 protocol actors and returns the underlying serial port.
 
-`GeckoBootloader` exposes the lower-level ASCII menu operations. After
-`start_xmodem_upload()`, leave the receiver's initial ASCII `C` unread because `xmodem::Xmodem::send`
-uses it to negotiate CRC mode.
+`GeckoBootloader` exposes the lower-level ASCII menu operations. `start_xmodem_upload()` consumes
+the bootloader's status response through its initial ASCII `C`; the high-level updater replays that
+validated request to `xmodem::Xmodem::send` to negotiate CRC mode.
 
 ## Command-line utility
 

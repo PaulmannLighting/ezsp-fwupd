@@ -4,6 +4,7 @@ use std::time::Duration;
 use log::{debug, trace};
 use serialport::SerialPort;
 
+use super::XMODEM_CRC_REQUEST;
 use crate::ignore_timeout::IgnoreTimeout;
 
 const BOOTLOADER_MENU_PROMPT: &[u8] = b"BL >";
@@ -25,14 +26,16 @@ pub trait GeckoBootloader {
     /// Returns an [`io::Error`] if the command cannot be written or the menu prompt cannot be read.
     fn wake_bootloader_menu(&mut self) -> io::Result<()>;
 
-    /// Sends menu option `1` to start a GBL upload.
+    /// Sends menu option `1` and waits for the bootloader's XMODEM-CRC request.
     ///
-    /// This method intentionally does not read the bootloader's subsequent ASCII `C`. That byte is
-    /// the XMODEM-CRC negotiation request and must be consumed by the XMODEM sender.
+    /// The bootloader may emit an ASCII status line before its initial `C`. This method consumes
+    /// that bounded console response through the `C`; the firmware transmitter replays the
+    /// already-observed request to the XMODEM implementation when the transfer starts.
     ///
     /// # Errors
     ///
-    /// Returns an [`io::Error`] if the command cannot be written.
+    /// Returns an [`io::Error`] if the command cannot be written or the XMODEM request cannot be
+    /// read.
     fn start_xmodem_upload(&mut self) -> io::Result<()>;
 
     /// Waits for the standalone bootloader to display its `BL >` menu prompt.
@@ -70,7 +73,10 @@ where
 
     fn start_xmodem_upload(&mut self) -> io::Result<()> {
         debug!("Selecting the bootloader GBL upload command...");
-        write_command(self, START_UPLOAD_COMMAND)
+        write_command(self, START_UPLOAD_COMMAND)?;
+        let response = read_until(self, &[XMODEM_CRC_REQUEST])?;
+        trace!("Received upload response: {response:#04X?}");
+        Ok(())
     }
 
     fn wait_for_bootloader_menu(&mut self) -> io::Result<()> {
@@ -140,8 +146,10 @@ mod tests {
 
     use super::{
         BOOTLOADER_MENU_PROMPT, BOOTLOADER_WAKE_COMMAND, MAX_BOOTLOADER_RESPONSE_SIZE,
-        START_UPLOAD_COMMAND, read_until, write_command,
+        START_UPLOAD_COMMAND, XMODEM_CRC_REQUEST, read_until, write_command,
     };
+
+    const UPLOAD_START_RESPONSE: &[u8] = b"\r\nbegin upload\r\nC";
 
     #[derive(Debug)]
     struct MockIo {
@@ -187,14 +195,24 @@ mod tests {
     }
 
     #[test]
-    fn starts_upload_without_consuming_crc_request() {
-        let response = b"C";
+    fn starts_upload_on_first_crc_request() {
+        let response = UPLOAD_START_RESPONSE
+            .iter()
+            .copied()
+            .chain(b"additional bytes are not consumed".iter().copied())
+            .collect::<Vec<_>>();
         let mut io = MockIo::new(response);
 
         write_command(&mut io, START_UPLOAD_COMMAND).expect("upload command should be written");
+        let response = read_until(&mut io, &[XMODEM_CRC_REQUEST])
+            .expect("XMODEM-CRC request should be detected");
 
         assert_eq!(io.output, START_UPLOAD_COMMAND);
-        assert_eq!(io.input.position(), 0);
+        assert_eq!(response, UPLOAD_START_RESPONSE);
+        assert_eq!(
+            io.input.position(),
+            u64::try_from(UPLOAD_START_RESPONSE.len()).expect("test response length should fit")
+        );
     }
 
     #[test]
