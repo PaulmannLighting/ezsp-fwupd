@@ -7,17 +7,17 @@ edition = "2024"
 publish = false
 
 [dependencies]
-ashv2 = { version = "7.0", git = "https://github.com/PaulmannLighting/ashv2/" }
-clap = { version = "4.6", features = ["derive"] }
-env_logger = "0.11"
-ezsp = { version = "3.0", git = "https://github.com/PaulmannLighting/ezsp/", features = ["ashv2", "semver"] }
-ezsp-fwupd = { path = "../ezsp-fwupd" }
-indicatif = "0.18"
-le-stream = { version = "8", features = ["derive"] }
-log = "0.4"
-semver = "1.0"
-serialport = "4.9"
-tokio = { version = "1.52", features = ["macros", "rt", "rt-multi-thread"] }
+ashv2.workspace = true
+clap.workspace = true
+env_logger.workspace = true
+ezsp = { workspace = true, features = ["semver"] }
+ezsp-fwupd.workspace = true
+indicatif.workspace = true
+le-stream.workspace = true
+log.workspace = true
+semver.workspace = true
+serialport.workspace = true
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }
 
 [[bin]]
 name = "ezsp-fwupd"

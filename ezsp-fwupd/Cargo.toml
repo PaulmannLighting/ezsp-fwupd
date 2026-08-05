@@ -7,15 +7,15 @@ edition = "2024"
 publish = false
 
 [dependencies]
-ashv2 = { version = "7.0", git = "https://github.com/PaulmannLighting/ashv2/" }
-bitflags = "2.11"
-crc = "3.3"
-ezsp = { version = "3.0", git = "https://github.com/PaulmannLighting/ezsp/", features = ["ashv2"] }
-indicatif = "0.18"
-le-stream = { version = "8", features = ["derive", "macaddr"] }
-log = "0.4"
-serialport = "4.9"
-tokio = { version = "1.52", features = ["sync"] }
+ashv2.workspace = true
+bitflags.workspace = true
+crc.workspace = true
+ezsp.workspace = true
+indicatif.workspace = true
+le-stream = { workspace = true, features = ["macaddr"] }
+log.workspace = true
+serialport.workspace = true
+tokio = { workspace = true, features = ["sync"] }
 
 [lints]
 workspace = true
