@@ -1,6 +1,6 @@
 [package]
 name = "auto-updater"
-version = "0.1.0"
+version = "0.1.1"
 description = "Firmware auto update utility for EZSP-based Zigbee devices"
 license = "MIT"
 edition = "2024"
