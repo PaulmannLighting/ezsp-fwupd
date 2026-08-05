@@ -1,8 +1,10 @@
 const XMODEM_BLOCK_SIZE: usize = 128;
 
-/// Counts the standard 128-byte XMODEM blocks required for a firmware image.
+/// Counts the standard 128-byte XMODEM blocks required for a byte sequence.
+///
+/// This is useful for sizing an [`indicatif::ProgressBar`] passed to [`crate::Fwupd::fwupd`].
 pub trait FrameCount {
-    /// Returns the number of XMODEM blocks required to transmit the value.
+    /// Returns the number of XMODEM blocks required to transmit the referenced bytes.
     fn frame_count(&self) -> usize;
 }
 

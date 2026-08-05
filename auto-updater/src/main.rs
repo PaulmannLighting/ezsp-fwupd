@@ -1,4 +1,4 @@
-//! A firmware auto updater for Zigbee devices using the `ezsp` protocol.
+//! Manifest-driven firmware updates with EZSP version discovery and post-reboot validation.
 
 use std::process::ExitCode;
 

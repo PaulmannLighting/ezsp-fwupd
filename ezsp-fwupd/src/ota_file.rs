@@ -18,7 +18,7 @@ mod header;
 mod tag;
 mod upgrade_file_destination;
 
-/// Represents an OTA (Over-The-Air) file used for firmware updates.
+/// Parsed Zigbee OTA container and the firmware payload used for bootloader upload.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct OtaFile {
     magic: Magic,
@@ -69,7 +69,7 @@ impl OtaFile {
         &self.tags
     }
 
-    /// Return the OTA file's payload.
+    /// Returns the firmware payload that can be passed to [`crate::Fwupd::fwupd`].
     #[must_use]
     pub fn payload(&self) -> &[u8] {
         &self.payload
@@ -92,7 +92,7 @@ impl OtaFile {
         }
     }
 
-    /// Convert the OTA file into a payload vector.
+    /// Consumes the container and returns the firmware payload for bootloader upload.
     #[must_use]
     pub fn into_payload(self) -> Vec<u8> {
         self.payload

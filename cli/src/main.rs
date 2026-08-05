@@ -1,4 +1,4 @@
-//! A firmware update utility for devices using the `ASHv2` and `XMODEM` protocols.
+//! Interactive firmware flashing, version querying, bootloader control, and OTA inspection.
 
 use std::fs::read;
 use std::path::{Path, PathBuf};

@@ -3,7 +3,10 @@ use std::borrow::Cow;
 use indicatif::ProgressBar;
 use log::info;
 
-/// Trait for displaying and managing progress during firmware updates.
+/// Uniform progress reporting for updates with or without an [`indicatif::ProgressBar`].
+///
+/// The implementation for `Option<&ProgressBar>` updates the bar when present and otherwise sends
+/// user-facing messages to the logger.
 pub trait FlashProgress {
     /// Sets the message to be displayed on the progress bar.
     fn set_message(&self, msg: impl Into<Cow<'static, str>>);

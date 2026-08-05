@@ -12,23 +12,30 @@ const MAX_BOOTLOADER_RESPONSE_SIZE: usize = 1024;
 const RUN_APPLICATION_COMMAND: &[u8] = b"2";
 const START_UPLOAD_COMMAND: &[u8] = b"1";
 
-/// Commands supported by the interactive Silicon Labs Gecko standalone bootloader.
+/// Drives the ASCII menu of a Silicon Labs Gecko standalone UART bootloader.
+///
+/// This trait covers only the bootloader console protocol. XMODEM framing and acknowledgement
+/// handling belong to the `xmodem` crate used by [`crate::Fwupd`]. It is implemented for every
+/// native [`SerialPort`].
 pub trait GeckoBootloader {
-    /// Wakes the standalone bootloader and waits for its menu prompt.
+    /// Sends a carriage return and waits for the `BL >` menu prompt.
     ///
     /// # Errors
     ///
     /// Returns an [`io::Error`] if the command cannot be written or the menu prompt cannot be read.
     fn wake_bootloader_menu(&mut self) -> io::Result<()>;
 
-    /// Selects the GBL upload menu option.
+    /// Sends menu option `1` to start a GBL upload.
+    ///
+    /// This method intentionally does not read the bootloader's subsequent ASCII `C`. That byte is
+    /// the XMODEM-CRC negotiation request and must be consumed by the XMODEM sender.
     ///
     /// # Errors
     ///
     /// Returns an [`io::Error`] if the command cannot be written.
     fn start_xmodem_upload(&mut self) -> io::Result<()>;
 
-    /// Waits for the standalone bootloader to display its menu prompt.
+    /// Waits for the standalone bootloader to display its `BL >` menu prompt.
     ///
     /// This is used after XMODEM has acknowledged the end of a transfer and the bootloader is
     /// preparing to accept another menu command.
@@ -38,7 +45,10 @@ pub trait GeckoBootloader {
     /// Returns an [`io::Error`] if the menu prompt cannot be read.
     fn wait_for_bootloader_menu(&mut self) -> io::Result<()>;
 
-    /// Selects the bootloader menu command that runs the application image.
+    /// Sends menu option `2` to reset into the application image.
+    ///
+    /// Any console output produced after the command is read until the configured serial timeout.
+    /// A timeout while collecting that optional output is treated as normal completion.
     ///
     /// # Errors
     ///

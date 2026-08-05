@@ -12,9 +12,26 @@ use crate::{ClearBuffer, FlashProgress};
 mod gecko_bootloader;
 mod transmit;
 
-/// Trait for firmware update operations using a serial port.
+/// Performs a complete Gecko standalone-bootloader firmware update on a native serial port.
+///
+/// The implementation temporarily turns the port into an asynchronous ASHv2/EZSP connection to
+/// launch the bootloader. It then recovers the port, disables serial flow control, drives the Gecko
+/// ASCII menu, and sends the supplied GBL bytes with XMODEM-CRC. The original timeout and flow
+/// control settings are restored before the returned future completes.
 pub trait Fwupd: Sized {
-    /// Performs a firmware update operation.
+    /// Uploads `firmware` and asks the standalone bootloader to run the resulting application.
+    ///
+    /// `firmware` must yield the raw GBL byte stream expected by the Gecko bootloader. When
+    /// `timeout` is present, it is used for the synchronous bootloader and XMODEM stages. Progress
+    /// is advanced once for each 128-byte block read by the XMODEM implementation.
+    ///
+    /// The future returns the same serial port value, with its original timeout and flow-control
+    /// settings restored.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`std::io::Error`] if EZSP bootloader entry, serial reconfiguration, a Gecko menu
+    /// operation, the XMODEM transfer, or restoration of the serial settings fails.
     fn fwupd<F>(
         self,
         firmware: F,

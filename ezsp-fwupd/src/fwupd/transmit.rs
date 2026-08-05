@@ -48,9 +48,12 @@ where
     }
 }
 
-/// Trait for transmitting firmware to a device using the XMODEM protocol.
+/// Internal adapter from firmware byte iterators to the external `xmodem` crate.
 pub trait Transmit {
-    /// Transmit the firmware to the device using the XMODEM protocol.
+    /// Transmits the firmware using standard 128-byte XMODEM blocks and CRC negotiation.
+    ///
+    /// The receiver's initial ASCII `C` must still be pending on the device stream when this method
+    /// is called. If supplied, `progress_bar` advances when each firmware block is read.
     ///
     /// # Errors
     ///

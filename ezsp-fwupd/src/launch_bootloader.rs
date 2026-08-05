@@ -11,9 +11,14 @@ const MODE: u8 = 0x00;
 const PROTOCOL_VERSION: u8 = 8;
 const RESPONSE_CHANNEL_SIZE: usize = 8;
 
-/// Launch a standalone bootloader on the Zigbee NIC's UART.
+/// Launches a standalone bootloader through a temporary ASHv2/EZSP connection.
 pub trait LaunchBootloader: Sized {
-    /// Launch a standalone bootloader on the Zigbee NIC's UART.
+    /// Sends the EZSP standalone-bootloader command and recovers the underlying serial port.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`io::Error`] if the ASHv2/EZSP connection cannot be created or its actor tasks
+    /// cannot be terminated cleanly.
     fn launch_bootloader(self) -> impl Future<Output = io::Result<Self>>;
 }
 

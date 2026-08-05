@@ -75,7 +75,12 @@ impl Error for MakeUartError {
     }
 }
 
-/// Creates an EZSP connection over `ASHv2` using the specified serial port and channel sizes.
+/// Creates an EZSP connection over `ASHv2` and starts all protocol actor tasks.
+///
+/// `callback_channel_size` and `response_channel_size` bound the respective asynchronous queues.
+/// `protocol_version` is negotiated with the NCP before this function returns. The returned
+/// [`Tasks`] owner must remain alive while the [`Connection`] is in use and can later recover the
+/// native serial port through [`Tasks::terminate`].
 ///
 /// # Errors
 ///
