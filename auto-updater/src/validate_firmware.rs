@@ -1,6 +1,6 @@
 use core::time::Duration;
 
-use ezsp_fwupd::{Reset, make_uart};
+use ezsp_fwupd::{GeckoBootloader, make_uart};
 use log::{error, info};
 use semver::Version;
 use serialport::SerialPort;
@@ -44,8 +44,8 @@ where
             return None;
         };
 
-        if let Err(error) = serial_port.reset(Some(retry_interval)) {
-            error!("Failed to reset device: {error}");
+        if let Err(error) = serial_port.run_application(Some(retry_interval)) {
+            error!("Failed to run application: {error}");
         }
 
         return None;

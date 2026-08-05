@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use clap::{Parser, Subcommand};
 use ezsp::GetValueExt;
-use ezsp_fwupd::{FrameCount, Fwupd, OtaFile, Reset, make_uart};
+use ezsp_fwupd::{FrameCount, Fwupd, GeckoBootloader, OtaFile, make_uart};
 use indicatif::{ProgressBar, ProgressStyle};
 use le_stream::FromLeStream;
 use log::error;
@@ -117,7 +117,7 @@ async fn flash(tty: String, firmware: &Path, timeout: Duration) -> ExitCode {
     ExitCode::SUCCESS
 }
 
-/// Reset the device.
+/// Ask the standalone bootloader to run the application image.
 fn reset(tty: &str, timeout: Option<Duration>) -> ExitCode {
     let Ok(mut serial_port) = serialport::new(tty, BAUD_RATE)
         .flow_control(FlowControl::Software)
@@ -127,8 +127,8 @@ fn reset(tty: &str, timeout: Option<Duration>) -> ExitCode {
         return ExitCode::FAILURE;
     };
 
-    if let Err(error) = serial_port.reset(timeout) {
-        error!("Failed to reset device: {error}");
+    if let Err(error) = serial_port.run_application(timeout) {
+        error!("Failed to run application: {error}");
         return ExitCode::FAILURE;
     }
 

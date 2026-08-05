@@ -3,11 +3,19 @@ use crc::{CRC_16_XMODEM, Crc};
 const ONES_COMPLEMENT: u8 = 0xFF;
 const SOH: u8 = 0x01;
 const PAYLOAD_OFFSET: usize = 3;
+/// XMODEM end-of-transmission marker.
 pub const EOT: u8 = 0x04;
+/// XMODEM positive acknowledgement.
 pub const ACK: u8 = 0x06;
+/// XMODEM negative acknowledgement.
 pub const NAK: u8 = 0x15;
+/// XMODEM cancellation marker.
+pub const CAN: u8 = 0x18;
+/// Number of firmware bytes carried by a classic XMODEM frame.
 pub const PAYLOAD_SIZE: usize = 128;
+/// Total encoded size of a classic XMODEM-CRC frame.
 pub const PACKET_SIZE: usize = PAYLOAD_SIZE + 5;
+/// Firmware payload carried by a single XMODEM frame.
 pub type Payload = [u8; PAYLOAD_SIZE];
 pub type PacketBytes = [u8; PACKET_SIZE];
 

@@ -13,7 +13,7 @@ flowchart TD
     Actors --> Bootloader[Launch standalone bootloader]
     Bootloader --> Serial[Recovered native serial port]
     Serial --> Xmodem[XMODEM firmware transfer]
-    Xmodem --> Reset[Reset device]
+    Xmodem --> RunApplication[Select bootloader run command]
 ```
 
 The serial port starts as a blocking native `serialport` value because the bootloader and XMODEM
@@ -42,9 +42,24 @@ protocol actors, allowing the async serial halves to close; it then joins the se
 returns the original native port. This explicit ownership transition is required before the same
 port can be used for bootloader XMODEM traffic.
 
+## Bootloader console transition
+
+After the EZSP command launches the standalone bootloader, the UART no longer carries ASHv2 or
+EZSP frames. `Fwupd` temporarily disables the application's serial flow control, sends a carriage
+return, and reads until the bootloader's `BL >` ASCII prompt. It then selects menu option `1` and
+waits for the first ASCII `C`, which is the receiver's XMODEM-CRC readiness signal. Fixed menu or
+banner lengths are deliberately not used because bootloader versions can emit different text.
+
+These ASCII menu operations, including menu option `2` for running the application, are exposed by
+the `GeckoBootloader` trait. The separate `Transmit` trait owns only the XMODEM data transfer.
+
+When the update finishes or fails, `Fwupd` restores the original serial flow-control setting. A
+successful update selects bootloader menu option `2` to run the uploaded application.
+
 ## OTA and XMODEM
 
 `OtaFile` parses and validates Zigbee OTA containers and exposes their firmware payload. The XMODEM
-module divides that payload into 128-byte frames, pads the final frame, calculates XMODEM CRC-16
-checksums, retries negative acknowledgements, and reports progress through an optional `indicatif`
-progress bar.
+module divides that payload into 128-byte frames, pads the final frame with the `SUB` byte, calculates
+XMODEM CRC-16 checksums, retries negative acknowledgements, and reports progress through an optional
+`indicatif` progress bar. Completion requires an `ACK` for the `EOT` marker; a `NAK` retries the
+marker and a `CAN` aborts the transfer.

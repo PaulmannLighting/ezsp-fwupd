@@ -1,16 +1,16 @@
 use std::time::Duration;
 
 use indicatif::ProgressBar;
-use log::{debug, info};
-use serialport::SerialPort;
+use log::{debug, error, info};
+use serialport::{FlowControl, SerialPort};
 
-pub use self::reset::Reset;
+pub use self::gecko_bootloader::GeckoBootloader;
 use self::transmit::Transmit;
 use crate::launch_bootloader::LaunchBootloader;
 pub use crate::xmodem::FrameCount;
 use crate::{ClearBuffer, FlashProgress};
 
-mod reset;
+mod gecko_bootloader;
 mod transmit;
 
 /// Trait for firmware update operations using a serial port.
@@ -40,26 +40,41 @@ where
         F: IntoIterator<Item = u8>,
     {
         info!("Preparing bootloader...");
+        let original_flow_control = self.flow_control()?;
         self = self.launch_bootloader().await?;
+        self.set_flow_control(FlowControl::None)?;
         let original_timeout = self.timeout();
 
-        if let Some(timeout) = timeout {
-            self.set_timeout(timeout)?;
+        let update_result = (|| {
+            if let Some(timeout) = timeout {
+                self.set_timeout(timeout)?;
+            }
+
+            self.clear_buffer()?;
+
+            debug!("Waking the bootloader menu...");
+            self.wake_bootloader_menu()?;
+
+            debug!("Starting the XMODEM upload...");
+            self.start_xmodem_upload()?;
+
+            debug!("Transmitting firmware...");
+            self.transmit(firmware, Some(original_timeout), progress_bar)?;
+
+            progress_bar.set_message("Firmware update complete, resetting device...");
+            self.run_application(timeout)
+        })();
+        let restore_result = self
+            .set_flow_control(original_flow_control)
+            .map_err(std::io::Error::from);
+
+        match (update_result, restore_result) {
+            (Ok(()), Ok(())) => Ok(self),
+            (Err(error), Ok(())) | (Ok(()), Err(error)) => Err(error),
+            (Err(update_error), Err(restore_error)) => {
+                error!("Failed to restore serial flow control: {restore_error}");
+                Err(update_error)
+            }
         }
-
-        self.clear_buffer()?;
-
-        debug!("Initializing stage 1...");
-        self.init_stage1()?;
-
-        debug!("Initializing stage 2...");
-        self.init_stage2()?;
-
-        debug!("Transmitting firmware...");
-        self.transmit(firmware, Some(original_timeout), progress_bar)?;
-
-        progress_bar.set_message("Firmware update complete, resetting device...");
-        self.reset(timeout)?;
-        Ok(self)
     }
 }

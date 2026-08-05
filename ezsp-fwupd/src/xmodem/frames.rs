@@ -2,7 +2,7 @@ use std::iter::repeat;
 
 use super::frame::{Frame, PAYLOAD_SIZE};
 
-const FILLER: u8 = 0xFF;
+const SUB: u8 = 0x1A;
 
 /// An iterator that produces Xmodem frames from a byte stream.
 #[derive(Debug)]
@@ -41,7 +41,7 @@ where
 
         for (dst, src) in payload
             .iter_mut()
-            .zip(self.buffer.iter().copied().chain(repeat(FILLER)))
+            .zip(self.buffer.iter().copied().chain(repeat(SUB)))
         {
             *dst = src;
         }
@@ -49,6 +49,27 @@ where
         let frame = Frame::new(self.index, payload);
         self.index = self.index.wrapping_add(1);
         Some(frame)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Frames, SUB};
+    use crate::xmodem::frame::PAYLOAD_SIZE;
+
+    const DATA: u8 = 0xA5;
+    const HEADER_SIZE: usize = 3;
+
+    #[test]
+    fn pads_final_frame_with_sub() {
+        let frame = Frames::new([DATA].into_iter())
+            .next()
+            .expect("one input byte should produce one frame")
+            .into_bytes();
+        let payload = &frame[HEADER_SIZE..HEADER_SIZE + PAYLOAD_SIZE];
+
+        assert_eq!(payload[0], DATA);
+        assert!(payload[1..].iter().all(|byte| *byte == SUB));
     }
 }
 
