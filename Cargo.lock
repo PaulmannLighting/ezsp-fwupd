@@ -298,6 +298,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "217698eaf96b4a3f0bc4f3662aaa55bdf913cd54d7204591faa790070c6d0853"
 
 [[package]]
+name = "crc16"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "338089f42c427b86394a5ee60ff321da23a5c89c9d89514c829687b26359fcff"
+
+[[package]]
 name = "defmt"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -407,13 +413,13 @@ dependencies = [
  "ashv2",
  "async-serialport",
  "bitflags 2.13.1",
- "crc",
  "ezsp",
  "indicatif",
  "le-stream",
  "log",
  "serialport",
  "tokio",
+ "xmodem",
 ]
 
 [[package]]
@@ -1189,6 +1195,16 @@ name = "windows_x86_64_msvc"
 version = "0.52.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
+
+[[package]]
+name = "xmodem"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "65b1c49d0ace68aeacb52330f9c7ff3816b12c6909cab8ef1660f0440d5600b3"
+dependencies = [
+ "crc16",
+ "log",
+]
 
 [[package]]
 name = "zmij"

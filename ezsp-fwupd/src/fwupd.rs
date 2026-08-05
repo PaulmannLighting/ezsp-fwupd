@@ -7,7 +7,6 @@ use serialport::{FlowControl, SerialPort};
 pub use self::gecko_bootloader::GeckoBootloader;
 use self::transmit::Transmit;
 use crate::launch_bootloader::LaunchBootloader;
-pub use crate::xmodem::FrameCount;
 use crate::{ClearBuffer, FlashProgress};
 
 mod gecko_bootloader;
@@ -59,22 +58,49 @@ where
             self.start_xmodem_upload()?;
 
             debug!("Transmitting firmware...");
-            self.transmit(firmware, Some(original_timeout), progress_bar)?;
+            self.transmit(firmware, progress_bar)?;
+
+            debug!("Waiting for the bootloader menu...");
+            self.wait_for_bootloader_menu()?;
 
             progress_bar.set_message("Firmware update complete, resetting device...");
             self.run_application(timeout)
         })();
-        let restore_result = self
-            .set_flow_control(original_flow_control)
-            .map_err(std::io::Error::from);
+        let restore_result =
+            restore_serial_settings(&mut self, original_timeout, original_flow_control);
 
         match (update_result, restore_result) {
             (Ok(()), Ok(())) => Ok(self),
             (Err(error), Ok(())) | (Ok(()), Err(error)) => Err(error),
             (Err(update_error), Err(restore_error)) => {
-                error!("Failed to restore serial flow control: {restore_error}");
+                error!("Failed to restore serial settings: {restore_error}");
                 Err(update_error)
             }
+        }
+    }
+}
+
+fn restore_serial_settings<T>(
+    serial_port: &mut T,
+    timeout: Duration,
+    flow_control: FlowControl,
+) -> std::io::Result<()>
+where
+    T: SerialPort,
+{
+    let timeout_result = serial_port
+        .set_timeout(timeout)
+        .map_err(std::io::Error::from);
+    let flow_control_result = serial_port
+        .set_flow_control(flow_control)
+        .map_err(std::io::Error::from);
+
+    match (timeout_result, flow_control_result) {
+        (Ok(()), Ok(())) => Ok(()),
+        (Err(error), Ok(())) | (Ok(()), Err(error)) => Err(error),
+        (Err(timeout_error), Err(flow_control_error)) => {
+            error!("Failed to restore serial flow control: {flow_control_error}");
+            Err(timeout_error)
         }
     }
 }

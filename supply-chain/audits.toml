@@ -1,7 +1,17 @@
 
 # cargo-vet audits file
 
-[audits]
+[[audits.crc16]]
+who = "OpenAI Codex (AI-assisted)"
+criteria = "safe-to-deploy"
+version = "0.4.0"
+notes = "AI-assisted full-source audit. Reviewed the no_std CRC implementation, generated lookup-table macro use, Cargo metadata, and build.rs. The build script only reads OUT_DIR and writes deterministic CRC lookup tables there. No unsafe code, network access, subprocess execution, or writes outside Cargo's output directory were found. Runtime behavior is limited to in-memory CRC-16 calculations."
+
+[[audits.xmodem]]
+who = "OpenAI Codex (AI-assisted)"
+criteria = "safe-to-deploy"
+version = "0.4.0"
+notes = "AI-assisted full-source audit. Reviewed the std/no_std I/O abstraction, packet framing, CRC/checksum negotiation, send/receive state machines, error paths, tests, Cargo metadata, and CI configuration. No unsafe code, build script, network access, filesystem access, or subprocess execution exists in deployed code; runtime capabilities are limited to caller-provided Read/Write streams and logging. The external interoperability tests invoke sb/rb only as development tests. Noted an operational reliability limitation: unexpected per-block responses consume the global error budget while the sender advances its input rather than replaying the same block; this is not an ambient-capability or memory-safety issue."
 
 [[trusted.ashv2]]
 criteria = "safe-to-deploy"

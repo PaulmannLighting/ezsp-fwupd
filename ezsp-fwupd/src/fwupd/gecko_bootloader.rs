@@ -11,7 +11,6 @@ const BOOTLOADER_WAKE_COMMAND: &[u8] = b"\r";
 const MAX_BOOTLOADER_RESPONSE_SIZE: usize = 1024;
 const RUN_APPLICATION_COMMAND: &[u8] = b"2";
 const START_UPLOAD_COMMAND: &[u8] = b"1";
-const XMODEM_CRC_REQUEST: &[u8] = b"C";
 
 /// Commands supported by the interactive Silicon Labs Gecko standalone bootloader.
 pub trait GeckoBootloader {
@@ -22,13 +21,22 @@ pub trait GeckoBootloader {
     /// Returns an [`io::Error`] if the command cannot be written or the menu prompt cannot be read.
     fn wake_bootloader_menu(&mut self) -> io::Result<()>;
 
-    /// Selects the GBL upload menu option and waits for the XMODEM-CRC request.
+    /// Selects the GBL upload menu option.
     ///
     /// # Errors
     ///
-    /// Returns an [`io::Error`] if the command cannot be written or the XMODEM request cannot be
-    /// read.
+    /// Returns an [`io::Error`] if the command cannot be written.
     fn start_xmodem_upload(&mut self) -> io::Result<()>;
+
+    /// Waits for the standalone bootloader to display its menu prompt.
+    ///
+    /// This is used after XMODEM has acknowledged the end of a transfer and the bootloader is
+    /// preparing to accept another menu command.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`io::Error`] if the menu prompt cannot be read.
+    fn wait_for_bootloader_menu(&mut self) -> io::Result<()>;
 
     /// Selects the bootloader menu command that runs the application image.
     ///
@@ -44,17 +52,21 @@ where
 {
     fn wake_bootloader_menu(&mut self) -> io::Result<()> {
         debug!("Waking the standalone bootloader menu...");
-        let response =
-            write_command_and_read_until(self, BOOTLOADER_WAKE_COMMAND, BOOTLOADER_MENU_PROMPT)?;
+        write_command(self, BOOTLOADER_WAKE_COMMAND)?;
+        let response = read_until(self, BOOTLOADER_MENU_PROMPT)?;
         trace!("Received bootloader menu: {response:#04X?}");
         Ok(())
     }
 
     fn start_xmodem_upload(&mut self) -> io::Result<()> {
         debug!("Selecting the bootloader GBL upload command...");
-        let response =
-            write_command_and_read_until(self, START_UPLOAD_COMMAND, XMODEM_CRC_REQUEST)?;
-        trace!("Received upload response: {response:#04X?}");
+        write_command(self, START_UPLOAD_COMMAND)
+    }
+
+    fn wait_for_bootloader_menu(&mut self) -> io::Result<()> {
+        debug!("Waiting for the bootloader menu prompt...");
+        let response = read_until(self, BOOTLOADER_MENU_PROMPT)?;
+        trace!("Received bootloader menu: {response:#04X?}");
         Ok(())
     }
 
@@ -104,17 +116,12 @@ where
     ))
 }
 
-fn write_command_and_read_until<T>(
-    io: &mut T,
-    command: &[u8],
-    terminator: &[u8],
-) -> io::Result<Vec<u8>>
+fn write_command<T>(io: &mut T, command: &[u8]) -> io::Result<()>
 where
-    T: Read + Write + ?Sized,
+    T: Write + ?Sized,
 {
     io.write_all(command)?;
-    io.flush()?;
-    read_until(io, terminator)
+    io.flush()
 }
 
 #[cfg(test)]
@@ -123,7 +130,7 @@ mod tests {
 
     use super::{
         BOOTLOADER_MENU_PROMPT, BOOTLOADER_WAKE_COMMAND, MAX_BOOTLOADER_RESPONSE_SIZE,
-        START_UPLOAD_COMMAND, XMODEM_CRC_REQUEST, write_command_and_read_until,
+        START_UPLOAD_COMMAND, read_until, write_command,
     };
 
     #[derive(Debug)]
@@ -163,22 +170,21 @@ mod tests {
         let response = b"\r\nGecko Bootloader v2.01.02\r\n1. upload gbl\r\n2. run\r\nBL >";
         let mut io = MockIo::new(response);
 
-        write_command_and_read_until(&mut io, BOOTLOADER_WAKE_COMMAND, BOOTLOADER_MENU_PROMPT)
-            .expect("bootloader menu should be detected");
+        write_command(&mut io, BOOTLOADER_WAKE_COMMAND).expect("wake command should be written");
+        read_until(&mut io, BOOTLOADER_MENU_PROMPT).expect("bootloader menu should be detected");
 
         assert_eq!(io.output, BOOTLOADER_WAKE_COMMAND);
     }
 
     #[test]
-    fn starts_upload_on_first_crc_request() {
-        let response = b"\r\nbegin upload\r\nCadditional bytes are not consumed";
+    fn starts_upload_without_consuming_crc_request() {
+        let response = b"C";
         let mut io = MockIo::new(response);
 
-        write_command_and_read_until(&mut io, START_UPLOAD_COMMAND, XMODEM_CRC_REQUEST)
-            .expect("XMODEM-CRC request should be detected");
+        write_command(&mut io, START_UPLOAD_COMMAND).expect("upload command should be written");
 
         assert_eq!(io.output, START_UPLOAD_COMMAND);
-        assert_eq!(io.input.position(), 17);
+        assert_eq!(io.input.position(), 0);
     }
 
     #[test]
@@ -187,8 +193,7 @@ mod tests {
         let mut io = MockIo::new(response);
 
         let error =
-            write_command_and_read_until(&mut io, BOOTLOADER_WAKE_COMMAND, BOOTLOADER_MENU_PROMPT)
-                .expect_err("missing prompt should fail");
+            read_until(&mut io, BOOTLOADER_MENU_PROMPT).expect_err("missing prompt should fail");
 
         assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
     }

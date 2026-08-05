@@ -51,15 +51,15 @@ waits for the first ASCII `C`, which is the receiver's XMODEM-CRC readiness sign
 banner lengths are deliberately not used because bootloader versions can emit different text.
 
 These ASCII menu operations, including menu option `2` for running the application, are exposed by
-the `GeckoBootloader` trait. The separate `Transmit` trait owns only the XMODEM data transfer.
+the `GeckoBootloader` trait. The separate `Transmit` trait adapts the firmware iterator and progress
+reporting to the external `xmodem` crate.
 
-When the update finishes or fails, `Fwupd` restores the original serial flow-control setting. A
-successful update selects bootloader menu option `2` to run the uploaded application.
+When the update finishes or fails, `Fwupd` restores the original serial timeout and flow-control
+settings. A successful update selects bootloader menu option `2` to run the uploaded application.
 
 ## OTA and XMODEM
 
-`OtaFile` parses and validates Zigbee OTA containers and exposes their firmware payload. The XMODEM
-module divides that payload into 128-byte frames, pads the final frame with the `SUB` byte, calculates
-XMODEM CRC-16 checksums, retries negative acknowledgements, and reports progress through an optional
-`indicatif` progress bar. Completion requires an `ACK` for the `EOT` marker; a `NAK` retries the
-marker and a `CAN` aborts the transfer.
+`OtaFile` parses and validates Zigbee OTA containers and exposes their firmware payload. The
+third-party `xmodem` crate performs XMODEM-CRC negotiation, standard 128-byte framing, `SUB` padding,
+error-budget handling, and the acknowledged end-of-transmission exchange. A small reader adapter
+reports one optional `indicatif` progress increment for each firmware block supplied to the crate.
