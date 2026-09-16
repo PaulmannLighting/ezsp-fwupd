@@ -68,17 +68,12 @@ where
 
 /// Parse the version information from the device.
 fn parse_version(result: Result<EmberVersion, TryFromSliceError>) -> Option<Version> {
-    match result {
-        Ok(version_info) => match version_info.try_into() {
-            Ok(version) => Some(version),
-            Err(error) => {
-                error!("Failed to parse version info: {error}");
-                None
-            }
-        },
-        Err(error) => {
-            error!("Failed to parse version info: {error}");
-            None
-        }
-    }
+    let version_info = result
+        .inspect_err(|error| error!("Failed to parse version info: {error}"))
+        .ok()?;
+
+    version_info
+        .try_into()
+        .inspect_err(|error| error!("Failed to parse version info: {error}"))
+        .ok()
 }

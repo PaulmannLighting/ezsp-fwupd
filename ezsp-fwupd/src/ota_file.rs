@@ -8,15 +8,15 @@ use self::header::Header;
 use self::tag::Tag;
 use self::upgrade_file_destination::{ThreadId, UpgradeFileDestination};
 
+mod header;
+mod tag;
+mod upgrade_file_destination;
+
 const MAGIC: Magic = [0x1E, 0xF1, 0xEE, 0x0B];
 const HEADER_VERSION_ZIGBEE: u16 = 0x0100;
 const HEADER_VERSION_THREAD: u16 = 0x0200;
 
 type Magic = [u8; 4];
-
-mod header;
-mod tag;
-mod upgrade_file_destination;
 
 /// Parsed Zigbee OTA container and the firmware payload used for bootloader upload.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]

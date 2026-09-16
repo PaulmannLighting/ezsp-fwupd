@@ -7,9 +7,9 @@ use log::info;
 use self::field_control::FieldControl;
 use super::tag::Tag;
 
-const HEADER_STRING_LENGTH: usize = 32;
-
 mod field_control;
+
+const HEADER_STRING_LENGTH: usize = 32;
 
 /// Represents the header of an OTA (Over-The-Air) file used for firmware updates.
 #[derive(Clone, Debug, Eq, Hash, PartialEq, FromLeStream)]

@@ -23,18 +23,17 @@ impl Manifest {
     }
 }
 
+/// Loads the active firmware metadata, returning `None` when the manifest is missing or inactive.
+///
+/// # Errors
+///
+/// Returns an error if the manifest cannot be read (except for a missing file) or parsed.
 pub fn get_metadata(path: &Path) -> Result<Option<Metadata>, Box<dyn Error>> {
-    match serde_json::from_str::<Manifest>(&match read_to_string(path) {
+    let json = match read_to_string(path) {
         Ok(json) => json,
-        Err(error) => {
-            if error.kind() == ErrorKind::NotFound {
-                return Ok(None);
-            }
-
-            return Err(error.into());
-        }
-    }) {
-        Ok(manifest) => Ok(manifest.active()),
-        Err(error) => Err(error.into()),
-    }
+        Err(error) if error.kind() == ErrorKind::NotFound => return Ok(None),
+        Err(error) => return Err(error.into()),
+    };
+    let manifest: Manifest = serde_json::from_str(&json)?;
+    Ok(manifest.active())
 }

@@ -118,3 +118,6 @@ payload. The CLI and automatic updater validate the OTA magic before passing the
 The CLI provides direct operator control and an `indicatif` progress bar. The automatic updater adds
 manifest deserialization, semantic-version direction selection, a reboot grace period, and a second
 ASHv2/EZSP connection that verifies the running firmware version after the update.
+
+Manifest loading separates file access from JSON deserialization. A missing file or inactive
+manifest returns no metadata; other I/O errors and deserialization errors propagate to the caller.

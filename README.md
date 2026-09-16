@@ -96,6 +96,9 @@ The automatic updater reads a JSON manifest, compares its version with the runni
 performs an upgrade or downgrade when required, waits for reboot, and validates the resulting
 version. Its default manifest path is `/etc/ezsp-firmware-update.json`.
 
+A missing manifest or an absent or `null` `active` entry means no update is configured; the updater
+exits successfully. Other file-read errors and invalid manifest contents cause it to fail.
+
 ```json
 {
   "active": {
